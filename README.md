@@ -1,2 +1,3 @@
-# monitoring-site-premium-telegram-bot
-About Telegram bot application for monitoring site premium
+# Telegram Bot - Monitoring Site Premium
+
+Telegram bot application for monitoring site premium
