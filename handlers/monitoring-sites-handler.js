@@ -67,7 +67,8 @@ async function monitoringSitesHandler(msg, countStatusLink) {
         msg = await PAL356({ index, msg, countStatusLink, site, sshConfig: config.nms.gpon });
         break;
       case 'JAP246':
-        msg = await JAP246({ index, msg, countStatusLink, site, sshConfig: config.nms.gpon });
+        // msg = await JAP246({ index, msg, countStatusLink, site, sshConfig: config.nms.gpon });
+        msg = await JAP246({ index, msg, countStatusLink, site, sshConfig: config.nms.metro });
         break;
       case 'BLK001':
         msg = await BLK001({ index, msg, countStatusLink, site, sshConfig: config.nms.metro });

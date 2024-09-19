@@ -1,8 +1,8 @@
 // SITE ID : JAP246
-// LINK 1  : L2SW Fiberhome Citrans
-// LINK 2  : L2SW Fiberhome Citrans
+// LINK 1  : L2SW Fiberhome Citrans VIA METRO
+// LINK 2  : L2SW Fiberhome Citrans VIA METRO
 
-import L2SW_Fiberhome_Citrans from '../devices/L2SW_Fiberhome_Citrans.js';
+import L2SW_Fiberhome_Citrans_VIA_METRO from '../devices/L2SW_Fiberhome_Citrans_VIA_METRO.js';
 import updateStatusCounter from '../utils/update-status-counter.js';
 
 async function site({ index, msg, site, sshConfig, countStatusLink }) {
@@ -10,23 +10,23 @@ async function site({ index, msg, site, sshConfig, countStatusLink }) {
 
   // LINK 1
   telnetConfig = {
-    username: 'fiberhome',
-    password: 'fiberhome',
-    host: '10.199.157.78',
-    command: 'show int XGE0/1/1',
+    username: 'mso7-haris',
+    password: 'JuliAgus@2024',
+    host: 'ME-D7-STN',
+    command: 'dis int gi3/1/1',
   };
-  console.log(`  > Link 1: L2SW Fiberhome Citrans`);
-  const statusLink1 = await L2SW_Fiberhome_Citrans({ sshConfig, telnetConfig });
+  console.log(`  > Link 1: L2SW Fiberhome Citrans VIA METRO`);
+  const statusLink1 = await L2SW_Fiberhome_Citrans_VIA_METRO({ sshConfig, telnetConfig });
 
   // LINK 2
   telnetConfig = {
-    username: 'fiberhome',
-    password: 'fiberhome',
-    host: '10.199.157.78',
-    command: 'show int XGE0/1/3',
+    username: 'mso7-haris',
+    password: 'JuliAgus@2024',
+    host: 'ME-D7-STN',
+    command: 'dis int gi2/1/5',
   };
-  console.log(`  > Link 2: L2SW Fiberhome Citrans`);
-  const statusLink2 = await L2SW_Fiberhome_Citrans({ sshConfig, telnetConfig });
+  console.log(`  > Link 2: L2SW Fiberhome Citrans VIA METRO`);
+  const statusLink2 = await L2SW_Fiberhome_Citrans_VIA_METRO({ sshConfig, telnetConfig });
 
   // UPDATE COUNTER
   updateStatusCounter(countStatusLink, statusLink1, statusLink2);

@@ -41,7 +41,7 @@ const sites = [
     subdistrict: 'SULTENG',
     name: 'TBG MCP OTISTA PALU',
   },
-  //-------------------- L2SW Fiberhome Citrans --------------------//
+  //-------------------- L2SW Fiberhome Citrans VIA METRO --------------------//
   {
     id: 'JAP246',
     subdistrict: 'PAPUA',
