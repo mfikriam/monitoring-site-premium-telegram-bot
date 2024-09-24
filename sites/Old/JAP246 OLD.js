@@ -2,8 +2,8 @@
 // LINK 1  : L2SW Fiberhome Citrans
 // LINK 2  : L2SW Fiberhome Citrans
 
-import L2SW_Fiberhome_Citrans from '../devices/L2SW_Fiberhome_Citrans.js';
-import updateStatusCounter from '../utils/update-status-counter.js';
+import L2SW_Fiberhome_Citrans from '../../devices/L2SW_Fiberhome_Citrans.js';
+import updateStatusCounter from '../../utils/update-status-counter.js';
 
 async function site({ index, msg, site, sshConfig, countStatusLink }) {
   let telnetConfig;

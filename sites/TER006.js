@@ -1,9 +1,9 @@
 // SITE ID : TER006
-// LINK 1  : ONT Fiberhome A5161
-// LINK 2  : Unmonitor
+// LINK 1  : L2SW Fiberhome S5800
+// LINK 2  : L2SW Fiberhome S5800
 
 import config from '../utils/config.js';
-import ONT_Fiberhome_A5161 from '../devices/ONT_Fiberhome_A5161.js';
+import L2SW_Fiberhome_S5800 from '../devices/L2SW_Fiberhome_S5800.js';
 import updateStatusCounter from '../utils/update-status-counter.js';
 
 async function site({ index, msg, site, sshConfig, countStatusLink }) {
@@ -12,18 +12,25 @@ async function site({ index, msg, site, sshConfig, countStatusLink }) {
 
   // LINK 1
   telnetConfig = {
-    username,
-    password,
-    host: 'GPON01-D7-JLL-4',
-    command: ['cd onu', 'show onu_state slot 2 pon 8 onu 1'],
-    keyword: 'active',
+    username: 'admin',
+    password: '12345',
+    host: '10.199.238.6',
+    command: 'show rlink interface xgigaethernet 1/1/1',
+    keyword: 'up/up',
   };
-  console.log(`  > Link 1: ONT Fiberhome A5161`);
-  const statusLink1 = await ONT_Fiberhome_A5161({ sshConfig, telnetConfig });
+  console.log(`  > Link 1: L2SW Fiberhome S5800`);
+  const statusLink1 = await L2SW_Fiberhome_S5800({ sshConfig, telnetConfig });
 
   // LINK 2
-  console.log(`  > Link 2: Unmonitor ⬛`);
-  const statusLink2 = 'Unmonitor ⬛';
+  telnetConfig = {
+    username: 'admin',
+    password: '12345',
+    host: '10.199.238.6',
+    command: 'show rlink interface xgigaethernet 1/1/2',
+    keyword: 'up/up',
+  };
+  console.log(`  > Link 2: L2SW Fiberhome S5800`);
+  const statusLink2 = await L2SW_Fiberhome_S5800({ sshConfig, telnetConfig });
 
   // UPDATE COUNTER
   updateStatusCounter(countStatusLink, statusLink1, statusLink2);
