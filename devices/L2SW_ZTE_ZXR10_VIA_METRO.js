@@ -44,6 +44,12 @@ async function ont({ sshConfig, telnetConfig }) {
             result += dataStr;
             if (commandExec) finalResult += dataStr;
 
+            // HANDLE FINGERPRINT PROMPT
+            if (dataStr.includes('(yes/no/[fingerprint])?') && !loggedin) {
+              console.log(`    - Fingerprint Prompt Detected: Sending yes`);
+              stream.write('yes\n');
+            }
+
             // HANDLE TELNET PASSWORD
             if (dataStr.includes('Enter password:') && !loggedin) {
               loggedin = true;

@@ -20,6 +20,10 @@ const config = {
   ne: [
     {
       username: process.env.NE_USERNAME_1,
+      password: process.env.NE_PASSWORD_1,
+    },
+    {
+      username: process.env.NE_USERNAME_2,
       password: process.env.NE_PASSWORD_2,
     },
   ],

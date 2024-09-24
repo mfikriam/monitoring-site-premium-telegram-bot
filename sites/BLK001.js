@@ -2,16 +2,18 @@
 // LINK 1  : L2SW ZTE ZXR10 VIA METRO
 // LINK 2  : L2SW ZTE ZXR10 VIA METRO
 
+import config from '../utils/config.js';
 import L2SW_ZTE_ZXR10_VIA_METRO from '../devices/L2SW_ZTE_ZXR10_VIA_METRO.js';
 import updateStatusCounter from '../utils/update-status-counter.js';
 
 async function site({ index, msg, site, sshConfig, countStatusLink }) {
   let telnetConfig;
+  const { username, password } = config.ne[1];
 
   // LINK 1
   telnetConfig = {
-    username: 'mso7-haris',
-    password: 'JuliAgus@2024',
+    username,
+    password,
     host: 'ME-D7-SIN',
     command: 'display interface GigabitEthernet0/8/8',
   };
@@ -20,8 +22,8 @@ async function site({ index, msg, site, sshConfig, countStatusLink }) {
 
   // LINK 2
   telnetConfig = {
-    username: 'mso7-haris',
-    password: 'JuliAgus@2024',
+    username,
+    password,
     host: 'ME-D7-SIN',
     command: 'display interface GigabitEthernet0/9/0',
   };

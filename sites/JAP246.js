@@ -2,16 +2,18 @@
 // LINK 1  : L2SW Fiberhome Citrans VIA METRO
 // LINK 2  : L2SW Fiberhome Citrans VIA METRO
 
+import config from '../utils/config.js';
 import L2SW_Fiberhome_Citrans_VIA_METRO from '../devices/L2SW_Fiberhome_Citrans_VIA_METRO.js';
 import updateStatusCounter from '../utils/update-status-counter.js';
 
 async function site({ index, msg, site, sshConfig, countStatusLink }) {
   let telnetConfig;
+  const { username, password } = config.ne[1];
 
   // LINK 1
   telnetConfig = {
-    username: 'mso7-haris',
-    password: 'JuliAgus@2024',
+    username,
+    password,
     host: 'ME-D7-STN',
     command: 'dis int gi3/1/1',
   };
@@ -20,8 +22,8 @@ async function site({ index, msg, site, sshConfig, countStatusLink }) {
 
   // LINK 2
   telnetConfig = {
-    username: 'mso7-haris',
-    password: 'JuliAgus@2024',
+    username,
+    password,
     host: 'ME-D7-STN',
     command: 'dis int gi2/1/5',
   };
