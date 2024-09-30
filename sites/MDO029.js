@@ -1,9 +1,9 @@
 // SITE ID : MDO029
-// LINK 1  : ONT Fiberhome A5161
-// LINK 2  : Unmonitor
+// LINK 1  : ONT ZTE C300
+// LINK 2  : ONT ZTE C300
 
 import config from '../utils/config.js';
-import ONT_Fiberhome_A5161 from '../devices/ONT_Fiberhome_A5161.js';
+import ONT_ZTE_C300 from '../devices/ONT_ZTE_C300.js';
 import updateStatusCounter from '../utils/update-status-counter.js';
 
 async function site({ index, msg, site, sshConfig, countStatusLink }) {
@@ -14,16 +14,21 @@ async function site({ index, msg, site, sshConfig, countStatusLink }) {
   telnetConfig = {
     username,
     password,
-    host: 'GPON04-D7-PIK-4',
-    command: ['config', 'show authorization 1/4/13 | include FHTT05e9e527'],
-    keyword: 'up',
+    host: 'GPON02-D7-PIK-3',
+    command: 'show gpon onu detail-info gpon-onu_1/3/16:50',
   };
-  console.log(`  > Link 1: ONT Fiberhome A5161`);
-  const statusLink1 = await ONT_Fiberhome_A5161({ sshConfig, telnetConfig });
+  console.log(`  > Link 1: ONT ZTE C300`);
+  const statusLink1 = await ONT_ZTE_C300({ sshConfig, telnetConfig });
 
   // LINK 2
-  console.log(`  > Link 2: Unmonitor ⬛`);
-  const statusLink2 = 'Unmonitor ⬛';
+  telnetConfig = {
+    username,
+    password,
+    host: 'GPON01-D7-PIK-3',
+    command: 'show gpon onu detail-info gpon-onu_1/2/16:50',
+  };
+  console.log(`  > Link 2: ONT ZTE C300`);
+  const statusLink2 = await ONT_ZTE_C300({ sshConfig, telnetConfig });
 
   // UPDATE COUNTER
   updateStatusCounter(countStatusLink, statusLink1, statusLink2);
