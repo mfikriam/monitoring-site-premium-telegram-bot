@@ -1,9 +1,10 @@
 import { Client as SSHClient } from 'ssh2';
 import parser from '../parsers/KEYWORD_PARSER.js';
 
-async function ont({ sshConfig, telnetConfig }) {
+async function ont({ sshConfig, telnetConfig, timeout = 15000 }) {
   return new Promise((resolve, reject) => {
     const conn = new SSHClient();
+    let timeoutHandle;
 
     conn
       .on('ready', () => {
@@ -24,10 +25,19 @@ async function ont({ sshConfig, telnetConfig }) {
           let commandExec = false;
           let finished = false;
 
+          // Set a timeout to limit streaming time
+          timeoutHandle = setTimeout(() => {
+            console.log('    - Streaming Timeout Exceeded');
+            stream.end(); // End the stream if timeout is reached
+            console.log('    - SSH Stream Closed');
+            conn.end(); // Close the SSH connection
+            // return resolve('LOS ❌');
+          }, timeout);
+
           // STREAM CLOSE HANDLER
           stream.on('close', () => {
-            // console.log(result);
-            // console.log(finalResult);
+            // Clear the timeout if stream closes before time limit
+            clearTimeout(timeoutHandle);
 
             statusLink = authFailed ? 'Auth Failed 🟨' : parser(finalResult, telnetConfig.keyword);
             console.log(`    - Status Link: ${statusLink}`);
@@ -36,47 +46,38 @@ async function ont({ sshConfig, telnetConfig }) {
 
           // STREAM DATA HANDLER
           stream.on('data', (data) => {
-            // CONVERT STREAM DATA TO STRING
             const dataStr = data.toString();
-            // console.log(dataStr);
-
-            // STORE THE STREAM DATA
             result += dataStr;
             if (commandExec) finalResult += dataStr;
 
-            // HANDLE TELNET USERNAME
+            // Handle Telnet login and commands
             if (dataStr.includes('Username:') && !loggedin) {
               console.log(`    - Entering Telnet Username: ${telnetConfig.username}`);
               stream.write(`${telnetConfig.username}\n`);
             }
 
-            // HANDLE TELNET PASSWORD
             if (dataStr.includes('Password:')) {
               loggedin = true;
               console.log(`    - Entering Telnet Password: ${telnetConfig.password}`);
               stream.write(`${telnetConfig.password}\n`);
             }
 
-            // HANDLE WRONG TELNET USERNAME/PASSWORD
             if (dataStr.includes('%No such user or bad password.')) {
               authFailed = true;
-              console.log(`    - Wrong Telnet Username or Password`);
+              console.log('    - Wrong Telnet Username or Password');
               conn.end();
             }
 
-            // HANDLE FINISHED
             if (commandExec) {
               finished = true;
             }
 
-            // HANDLE COMMAND
             if (loggedin && !commandExec) {
               commandExec = true;
               console.log(`    - Executing Command: ${telnetConfig.command}`);
               stream.write(`${telnetConfig.command}\n`);
             }
 
-            // HANDLE CLOSING SSH CONNECTION
             if (finished) {
               console.log('    - SSH Stream Closed');
               conn.end();
@@ -89,12 +90,11 @@ async function ont({ sshConfig, telnetConfig }) {
           stream.write(`${commandTelnet}\n`);
         });
       })
-      // ERROR HANDLING
       .on('error', (err) => {
+        clearTimeout(timeoutHandle); // Clear the timeout on error
         console.log('    - SSH Connection Error');
         return resolve('SSH Failed 🟨');
       })
-      // CONNECT TO SSH STREAM
       .connect(sshConfig);
   });
 }

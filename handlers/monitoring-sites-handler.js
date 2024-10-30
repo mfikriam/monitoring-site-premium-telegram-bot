@@ -30,6 +30,9 @@ import LBA005 from '../sites/LBA005.js';
 import BAU027 from '../sites/BAU027.js';
 
 async function monitoringSitesHandler(msg, countStatusLink) {
+  // SORT THE SITES BASED ON ITS ID
+  premiumSites.sort((a, b) => a.id.localeCompare(b.id));
+
   // SORT THE SITES BASED ON ITS SUBDISTRICT
   premiumSites.sort((a, b) => a.subdistrict.localeCompare(b.subdistrict));
 

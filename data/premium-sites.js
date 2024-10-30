@@ -82,11 +82,6 @@ const sites = [
     name: 'Pandu',
   },
   {
-    id: 'PAL006',
-    subdistrict: 'SULTENG',
-    name: 'Tondo',
-  },
-  {
     id: 'PAL016',
     subdistrict: 'SULTENG',
     name: 'Pelabuhan Wani',
@@ -107,6 +102,11 @@ const sites = [
     name: 'LANGOWAN',
   },
   // ---------------- L2SW Fiberhome S5800 ----------------//
+  {
+    id: 'PAL006',
+    subdistrict: 'SULTENG',
+    name: 'Tondo',
+  },
   {
     id: 'WTP005',
     subdistrict: 'SULSEL',
