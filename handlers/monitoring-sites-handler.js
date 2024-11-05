@@ -28,6 +28,7 @@ import WTP005 from '../sites/WTP005.js';
 import BAU006 from '../sites/BAU006.js';
 import LBA005 from '../sites/LBA005.js';
 import BAU027 from '../sites/BAU027.js';
+import KDI010 from '../sites/KDI010.js';
 
 async function monitoringSitesHandler(msg, countStatusLink) {
   // SORT THE SITES BASED ON ITS ID
@@ -120,6 +121,9 @@ async function monitoringSitesHandler(msg, countStatusLink) {
         break;
       case 'BAU027':
         msg = await BAU027({ index, msg, countStatusLink, site, sshConfig: config.nms.gpon });
+        break;
+      case 'KDI010':
+        msg = await KDI010({ index, msg, countStatusLink, site, sshConfig: config.nms.metro });
         break;
       default:
         console.log(`   Site ${site.id} Not Recognized`);

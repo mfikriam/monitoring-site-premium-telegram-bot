@@ -1,0 +1,41 @@
+// SITE ID : KDI010
+// LINK 1  : L2SW ZTE ZXR10 VIA METRO
+// LINK 2  : L2SW ZTE ZXR10 VIA METRO
+
+import config from '../utils/config.js';
+import L2SW_ZTE_ZXR10_VIA_METRO from '../devices/L2SW_ZTE_ZXR10_VIA_METRO.js';
+import updateStatusCounter from '../utils/update-status-counter.js';
+
+async function site({ index, msg, site, sshConfig, countStatusLink }) {
+  let telnetConfig;
+  const { username, password } = config.ne[1];
+
+  // LINK 1
+  telnetConfig = {
+    username,
+    password,
+    host: 'ME-D7-MDG',
+    command: 'display interface Eth-Trunk24.352',
+  };
+  console.log(`  > Link 1: L2SW ZTE ZXR10 VIA METRO`);
+  const statusLink1 = await L2SW_ZTE_ZXR10_VIA_METRO({ sshConfig, telnetConfig });
+
+  // LINK 2
+  telnetConfig = {
+    username,
+    password,
+    host: 'ME-D7-KDR',
+    command: 'display interface GigabitEthernet8/0/8',
+  };
+  console.log(`  > Link 2: L2SW ZTE ZXR10 VIA METRO`);
+  const statusLink2 = await L2SW_ZTE_ZXR10_VIA_METRO({ sshConfig, telnetConfig });
+
+  // UPDATE COUNTER
+  updateStatusCounter(countStatusLink, statusLink1, statusLink2);
+
+  // CREATE & SEND MESSAGE
+  msg += `${index + 1}. ${site.subdistrict} | ${site.id} | ${statusLink1} | ${statusLink2} |\n`;
+  return msg;
+}
+
+export default site;

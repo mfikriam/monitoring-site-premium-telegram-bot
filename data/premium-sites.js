@@ -53,6 +53,11 @@ const sites = [
     subdistrict: 'SULSEL',
     name: 'Tanete',
   },
+  {
+    id: 'KDI010',
+    subdistrict: 'SULTRA',
+    name: 'Terminal Powatu',
+  },
   // ------------------------- L2SW ZTE ZXR10 -------------------------//
   {
     id: 'ADL007',
