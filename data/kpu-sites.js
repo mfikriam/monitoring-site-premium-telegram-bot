@@ -137,4 +137,6 @@ kpuSites = [
   'RAJA AMPAT',
 ];
 
+// kpuSites = ['RAJA AMPAT'];
+
 export default kpuSites;
