@@ -101,7 +101,7 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
             stream.write(`${currentCommand}\n`);
           }
 
-          // HANDLE PAGINATION
+          // HANDLE FINISHING
           if (secondCommandExec && (dataStr.includes(`up`) || dataStr.includes(`dn`))) {
             finished = true;
           }

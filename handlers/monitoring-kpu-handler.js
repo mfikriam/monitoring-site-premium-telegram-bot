@@ -1,14 +1,15 @@
-// IMPORT CONFIG
-import kpuConfig from '../config/kpu-config.js';
-
 // IMPORT DATA
 import kpuSites from '../data/kpu-sites.js';
+
+// IMPORT HANDLERS
+import excelHandler from './excel-handler.js';
 
 // IMPORT DEVICES
 import OLT_ZTE_CSERIES from '../new-devices/OLT_ZTE_CSERIES.js';
 import OLT_ALU from '../new-devices/OLT_ALU.js';
 import OLT_FH_A5161 from '../new-devices/OLT_FH_A5161.js';
 import OLT_FH_A5261 from '../new-devices/OLT_FH_A5261.js';
+import OLT_FH_A5261v2 from '../new-devices/OLT_FH_A5261v2.js';
 
 async function getStatusLink(site) {
   const sshConfig = {
@@ -39,6 +40,10 @@ async function getStatusLink(site) {
     return await OLT_FH_A5261({ sshConfig, site, neConfig });
   }
 
+  if (site.device === 'OLT FH A5261v2') {
+    return await OLT_FH_A5261v2({ sshConfig, site, neConfig });
+  }
+
   console.log(`    - Device ${site.device} Not Recognized`);
   return '🟨';
 }
@@ -56,6 +61,9 @@ async function monitoringKPUHandler(msg, countStatusLink) {
     'JAYAPURA',
     'PAPUA BARAT',
   ];
+
+  // GET KPU CONFIG
+  const kpuConfig = await excelHandler('kpu-config.xlsx');
 
   // GET ALLOWED KPU SITES
   const sites = kpuConfig.filter((site) => kpuSites.includes(site.name));

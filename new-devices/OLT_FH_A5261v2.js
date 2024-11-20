@@ -1,8 +1,8 @@
 import { Client as SSHClient } from 'ssh2';
 
 function parser(resultStr) {
-  if (resultStr && resultStr.includes('optics count : 0')) return '❌';
-  if (resultStr && !resultStr.includes('unknown')) return '✅';
+  const keyword = 'is active';
+  if (resultStr && resultStr.includes(keyword)) return '✅';
   return '❌';
 }
 
@@ -34,8 +34,12 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
         let finalResult = '';
         let loggedin = false;
         let authFailed = false;
-        let commandExec = false;
         let finished = false;
+        let firstCommandExec = false;
+        let secondCommandExec = false;
+        let thirdCommandExec = false;
+        let currentCommand = '';
+        let port = '';
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
         timeoutHandle = setTimeout(() => {
@@ -60,43 +64,67 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
 
           // STORE THE STREAM DATA
           result += dataStr;
-          if (commandExec) finalResult += dataStr;
+          if (thirdCommandExec) finalResult += dataStr;
 
           // HANDLE NE AUTH: USERNAME
-          if (dataStr.includes('login:') && !loggedin) {
+          if (dataStr.includes('Login:') && !loggedin) {
             console.log(`    - Entering NE Username: ${neConfig.username}`);
             stream.write(`${neConfig.username}\n`);
           }
 
           // HANDLE NE AUTH: PASSWORD
-          if (dataStr.includes('password:') && !loggedin) {
+          if (dataStr.includes('Password:') && !loggedin) {
             loggedin = true;
             console.log(`    - Entering NE Password: ${neConfig.password}`);
             stream.write(`${neConfig.password}\n`);
           }
 
           // HANDLE NE AUTH FAILED
-          if (dataStr.includes('Login incorrect')) {
+          if (dataStr.includes('Login Failed')) {
             authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
 
-          // HANDLE MAIN COMMAND
-          if (dataStr.includes(`${site.hostname}>#`) && !commandExec) {
-            commandExec = true;
-            const mainCommand = `show equipment ont optics ${site.interface}`;
-            console.log(`    - Executing Command: ${mainCommand}`);
-            stream.write(`${mainCommand}\n`);
+          // HANDLE FIRST COMMAND
+          if (dataStr.includes(`${site.hostname}#`) && loggedin && !firstCommandExec) {
+            firstCommandExec = true;
+            currentCommand = `config`;
+            console.log(`    - Executing First Command: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
+          }
+
+          // HANDLE SECOND COMMAND
+          if (dataStr.includes(`${site.hostname}(config)#`) && loggedin && firstCommandExec && !secondCommandExec) {
+            secondCommandExec = true;
+            port = site.interface.split('/');
+            currentCommand = `interface pon 1/${port[0]}/${port[1]}`;
+            console.log(`    - Executing Second Command: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
+          }
+
+          // HANDLE THIRD COMMAND
+          if (
+            dataStr.includes(`${site.hostname}(config-if-pon-`) &&
+            loggedin &&
+            firstCommandExec &&
+            secondCommandExec &&
+            !thirdCommandExec
+          ) {
+            thirdCommandExec = true;
+            port = site.interface.split('/');
+            currentCommand = `show onu active-state ${port[2]}`;
+            console.log(`    - Executing Third Command: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
           }
 
           // HANDLE FINISHING
-          if (dataStr.includes('optics count :')) {
+          if (thirdCommandExec && dataStr.includes('.')) {
             finished = true;
           }
 
           // HANDLE CLOSING SSH CONNECTION
-          if (dataStr.includes(`${site.hostname}>#`) && finished) {
+          if (dataStr.includes(`${site.hostname}(config-if-pon-`) && finished) {
             console.log('    - SSH Stream Closed');
             conn.end();
           }
