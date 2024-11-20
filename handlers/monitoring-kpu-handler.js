@@ -84,6 +84,9 @@ async function monitoringKPUHandler(msg, countStatusLink) {
     // GENERATE SUBDISTRICT TITLE
     msg += `<b>${i + 1}. ${subdistrict} : ${sortedSites.length} Site\n</b>`;
 
+    // INITIALIZED SITE LOS
+    const siteLOS = [];
+
     // GENERATE SITES STATUS
     for (const site of sortedSites) {
       // PRINT SITE TITLE
@@ -99,9 +102,11 @@ async function monitoringKPUHandler(msg, countStatusLink) {
           countStatusLink.up++;
           break;
         case '❌':
+          siteLOS.push(site);
           countStatusLink.down++;
           break;
         default:
+          siteLOS.push(site);
           countStatusLink.others++;
           break;
       }
@@ -110,9 +115,17 @@ async function monitoringKPUHandler(msg, countStatusLink) {
       msg += `${site.name} ${status} | `;
     }
 
+    // ADD SITE LOS TO MESSAGE
+    if (siteLOS.length > 0) {
+      msg += `\n\n`;
+      siteLOS.forEach((site) => {
+        msg += `- ${site.name}, ${site.hostname}, ${site.ip}, ${site.interface}, ${site.sn}\n`;
+      });
+    }
+
     // ADD NEWLINE
     if (sortedSites.length > 0) msg += `\n`;
-    msg += `\n`;
+    if (siteLOS.length === 0) msg += `\n`;
   }
 
   // GENERATE SUMMARY
