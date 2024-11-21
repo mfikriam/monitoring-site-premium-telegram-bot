@@ -1,5 +1,5 @@
 // IMPORT DATA
-import kpuSites from '../data/kpu-sites.js';
+import allowedKPUSites from '../data/allowed-kpu-sites.js';
 
 // IMPORT HANDLERS
 import excelHandler from './excel-handler.js';
@@ -10,16 +10,17 @@ import OLT_ALU from '../new-devices/OLT_ALU.js';
 import OLT_FH_A5161 from '../new-devices/OLT_FH_A5161.js';
 import OLT_FH_A5261 from '../new-devices/OLT_FH_A5261.js';
 import OLT_FH_A5261v2 from '../new-devices/OLT_FH_A5261v2.js';
+import METRO from '../new-devices/METRO.js';
 
 async function getStatusLink(site) {
-  const sshConfig = {
+  let sshConfig = {
     host: process.env.GPON_NMS_HOST,
     username: process.env.GPON_NMS_USERNAME,
     password: process.env.GPON_NMS_PASSWORD,
     port: Number(process.env.GPON_NMS_PORT),
   };
 
-  const neConfig = {
+  let neConfig = {
     username: process.env.GPON_NE_USERNAME,
     password: process.env.GPON_NE_PASSWORD,
   };
@@ -44,11 +45,27 @@ async function getStatusLink(site) {
     return await OLT_FH_A5261v2({ sshConfig, site, neConfig });
   }
 
+  if (site.device === 'METRO') {
+    sshConfig = {
+      host: process.env.METRO_NMS_HOST,
+      username: process.env.METRO_NMS_USERNAME,
+      password: process.env.METRO_NMS_PASSWORD,
+      port: Number(process.env.METRO_NMS_PORT),
+    };
+    neConfig = { username: process.env.METRO_NE_USERNAME, password: process.env.METRO_NE_PASSWORD };
+    return await METRO({ sshConfig, site, neConfig });
+  }
+
   console.log(`    - Device ${site.device} Not Recognized`);
   return '🟨';
 }
 
-async function monitoringKPUHandler(msg, countStatusLink) {
+async function monitoringKPUHandler(msg) {
+  // INITIALIZE COUNT STATUS LINK
+  const countStatusIpTransit = { up: 0, down: 0, others: 0 };
+  const countStatusMetroBackhaul = { up: 0, down: 0, others: 0 };
+  const countStatusMetroChild = { up: 0, down: 0, others: 0 };
+
   // DEFINE SUBDISTRCTS
   const subdistricts = [
     'MAKASSAR',
@@ -60,23 +77,26 @@ async function monitoringKPUHandler(msg, countStatusLink) {
     'MALUKU',
     'JAYAPURA',
     'PAPUA BARAT',
+    'IP TRANSIT',
+    'METRO BACKHAUL',
   ];
 
   // GET KPU CONFIG
   const kpuConfig = await excelHandler('kpu-config.xlsx');
 
   // GET ALLOWED KPU SITES
-  const sites = kpuConfig.filter((site) => kpuSites.includes(site.name));
+  const kpuSites = kpuConfig.filter((site) => allowedKPUSites.includes(site.name));
 
   // INITIALIZE INDEX SITES
   let indexSite = 0;
 
+  // Metro E Child
   for (let i = 0; i < subdistricts.length; i++) {
     // GET SUBDISTRICT
     const subdistrict = subdistricts[i];
 
     // FILTER KPU CONFIG BASED ON SUBDISTRICT
-    const filteredSites = sites.filter((site) => site.subdistrict === subdistrict);
+    const filteredSites = kpuSites.filter((site) => site.subdistrict === subdistrict);
 
     // SORT SITES KPU BASED ON SITE NAME (ASCENDING)
     const sortedSites = filteredSites.sort((a, b) => a.name.localeCompare(b.name));
@@ -99,15 +119,21 @@ async function monitoringKPUHandler(msg, countStatusLink) {
       // UPDATE COUNT LINK STATUS
       switch (status) {
         case '✅':
-          countStatusLink.up++;
+          if (subdistrict === 'IP TRANSIT') countStatusIpTransit.up++;
+          else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.up++;
+          else countStatusMetroChild.up++;
           break;
         case '❌':
           siteLOS.push(site);
-          countStatusLink.down++;
+          if (subdistrict === 'IP TRANSIT') countStatusIpTransit.down++;
+          else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.down++;
+          else countStatusMetroChild.down++;
           break;
         default:
           siteLOS.push(site);
-          countStatusLink.others++;
+          if (subdistrict === 'IP TRANSIT') countStatusIpTransit.others++;
+          else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.others++;
+          else countStatusMetroChild.others++;
           break;
       }
 
@@ -128,10 +154,16 @@ async function monitoringKPUHandler(msg, countStatusLink) {
     if (siteLOS.length === 0) msg += `\n`;
   }
 
+  // COUNT TOTAL SITES
+  const totalIpTransit = Object.values(countStatusIpTransit).reduce((sum, value) => sum + value, 0);
+  const totalMetroBackhaul = Object.values(countStatusMetroBackhaul).reduce((sum, value) => sum + value, 0);
+  const totalMetroChild = Object.values(countStatusMetroChild).reduce((sum, value) => sum + value, 0);
+
   // GENERATE SUMMARY
-  msg += `<b>Total : ${sites.length} Site</b>\n`;
-  msg += `<b>Summary Report : Up | Down | Others</b>\n`;
-  msg += `<b>${countStatusLink.up} | ${countStatusLink.down} | ${countStatusLink.others}</b>\n`;
+  msg += `<b>Layanan KPU Milenet | Total |  Total UP | Total Down</b>\n`;
+  msg += `IP Transit | ${totalIpTransit} | ${countStatusIpTransit.up} | ${countStatusIpTransit.down}\n`;
+  msg += `Metro E Back Haul | ${totalMetroBackhaul} | ${countStatusMetroBackhaul.up} | ${countStatusMetroBackhaul.down}\n`;
+  msg += `Metro E Child | ${totalMetroChild} | ${countStatusMetroChild.up} | ${countStatusMetroChild.down}\n`;
 
   return msg;
 }

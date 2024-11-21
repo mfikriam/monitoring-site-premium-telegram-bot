@@ -16,13 +16,6 @@ const bot = new TelegramBot(config.bot.token, { polling: true });
 // INITIALIZE BOT MESSAGE
 let botMsg = ``;
 
-// INITIALIZE COUNT STATUS LINK
-const countStatusLink = {
-  up: 0,
-  down: 0,
-  others: 0,
-};
-
 async function run() {
   try {
     // GENERATE INITIAL MESSAGE
@@ -31,7 +24,7 @@ async function run() {
     botMsg += `\n`;
 
     // GET STATUS SITE
-    botMsg = await monitoringKPUHandler(botMsg, countStatusLink);
+    botMsg = await monitoringKPUHandler(botMsg);
   } catch (err) {
     botMsg += sshErrorMsg(botMsg);
     console.log('Error Executing SSH Command');
