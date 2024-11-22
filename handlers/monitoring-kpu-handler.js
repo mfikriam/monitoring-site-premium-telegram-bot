@@ -1,3 +1,6 @@
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers'; // Required for parsing arguments with ES Modules
+
 // IMPORT DATA
 import allowedKPUSites from '../data/allowed-kpu-sites.js';
 
@@ -13,17 +16,52 @@ import OLT_FH_A5261v2 from '../new-devices/OLT_FH_A5261v2.js';
 import METRO from '../new-devices/METRO.js';
 
 async function getStatusLink(site) {
-  let sshConfig = {
-    host: process.env.GPON_NMS_HOST,
-    username: process.env.GPON_NMS_USERNAME,
-    password: process.env.GPON_NMS_PASSWORD,
-    port: Number(process.env.GPON_NMS_PORT),
-  };
+  // GET SERVER LOCATION
+  const argv = yargs(hideBin(process.argv)) // Parse the command-line arguments
+    .option('server', {
+      alias: 's',
+      type: 'string',
+      description: 'Server location',
+      default: 'kosong', // Set a default value
+    })
+    .parse(); // Explicitly call .parse() when using ES Modules
+  let hostGPON;
+  let hostMETRO;
+  switch (argv.server) {
+    case 'sentul':
+      hostGPON = '10.60.190.16';
+      hostMETRO = '10.60.190.15';
+      break;
+    case 'jatinegara':
+      hostGPON = '10.62.165.21';
+      hostMETRO = '10.62.170.56';
+      break;
+    default:
+      hostGPON = process.env.GPON_NMS_HOST;
+      hostMETRO = process.env.METRO_NMS_HOST;
+      break;
+  }
 
-  let neConfig = {
-    username: process.env.GPON_NE_USERNAME,
-    password: process.env.GPON_NE_PASSWORD,
-  };
+  // DEFICE SSH & NE CONFIG
+  let sshConfig = {};
+  let neConfig = {};
+  if (site.device === 'METRO') {
+    sshConfig = {
+      host: hostMETRO,
+      username: process.env.METRO_NMS_USERNAME,
+      password: process.env.METRO_NMS_PASSWORD,
+      port: Number(process.env.METRO_NMS_PORT),
+    };
+    neConfig = { username: process.env.METRO_NE_USERNAME, password: process.env.METRO_NE_PASSWORD };
+  } else {
+    sshConfig = {
+      host: hostGPON,
+      username: process.env.GPON_NMS_USERNAME,
+      password: process.env.GPON_NMS_PASSWORD,
+      port: Number(process.env.GPON_NMS_PORT),
+    };
+    neConfig = { username: process.env.GPON_NE_USERNAME, password: process.env.GPON_NE_PASSWORD };
+  }
 
   if (site.device.includes('OLT ZTE C')) {
     return await OLT_ZTE_CSERIES({ sshConfig, site, neConfig });
@@ -46,13 +84,6 @@ async function getStatusLink(site) {
   }
 
   if (site.device === 'METRO') {
-    sshConfig = {
-      host: process.env.METRO_NMS_HOST,
-      username: process.env.METRO_NMS_USERNAME,
-      password: process.env.METRO_NMS_PASSWORD,
-      port: Number(process.env.METRO_NMS_PORT),
-    };
-    neConfig = { username: process.env.METRO_NE_USERNAME, password: process.env.METRO_NE_PASSWORD };
     return await METRO({ sshConfig, site, neConfig });
   }
 
