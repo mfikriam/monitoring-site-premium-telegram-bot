@@ -169,14 +169,23 @@ async function monitoringKPUHandler(msg) {
       }
 
       // ADD STATUS TO TEXT MESSAGE
-      msg += `${site.name} ${status} | `;
+      if (subdistrict === 'IP TRANSIT' || subdistrict === 'METRO BACKHAUL') {
+        // msg += `${site.name}, ${site.note} ${status} | `;
+        msg += `${site.note} ${status} | `;
+      } else {
+        msg += `${site.name} ${status} | `;
+      }
     }
 
     // ADD SITE LOS TO MESSAGE
     if (siteLOS.length > 0) {
       msg += `\n\n`;
       siteLOS.forEach((site) => {
-        msg += `- ${site.name}, ${site.hostname}, ${site.ip}, ${site.interface}, ${site.sn}\n`;
+        if (subdistrict === 'IP TRANSIT' || subdistrict === 'METRO BACKHAUL') {
+          msg += `- ${site.name}, ${site.note}, ${site.hostname}, ${site.ip}, ${site.interface}, ${site.sn}\n`;
+        } else {
+          msg += `- ${site.name}, ${site.hostname}, ${site.ip}, ${site.interface}, ${site.sn}\n`;
+        }
       });
     }
 
