@@ -4,9 +4,17 @@
   "description": "Telegram bot application for monitoring site premium",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
-    "start:kpu": "node app-kpu.js"
+    "start": "node app-premium.js",
+    "dev": "nodemon app-premium.js",
+    "start:premium": "node app.js --site=premium",
+    "start:premium:sentul": "node app.js --site=premium --server=sentul",
+    "start:premium:jatinegara": "node app.js --site=premium --server=jatinegara",
+    "start:kpu": "node app-kpu.js",
+    "start:kpu:sentul": "node app.js --site=kpu --server=sentul",
+    "start:kpu:jatinegara": "node app.js --site=kpu --server=jatinegara",
+    "start:iwip": "node app.js --site=iwip",
+    "start:iwip:sentul": "node app.js --site=iwip --server=sentul",
+    "start:iwip:jatinegara": "node app.js --site=iwip --server=jatinegara"
   },
   "keywords": [],
   "author": "mfikriam",

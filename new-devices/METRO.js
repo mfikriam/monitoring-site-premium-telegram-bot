@@ -1,5 +1,8 @@
 import { Client as SSHClient } from 'ssh2';
 
+// IMPORT UTILS
+import getStatusDesc from '../utils/get-status-descriptions.js';
+
 function parser(resultStr, site) {
   // GigabitEthernet2/1/1.3557 current state : UP
   const keyword = `${site.interface} current state : UP`;
@@ -52,7 +55,8 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
         stream.on('close', () => {
           clearTimeout(timeoutHandle); // Clear the timeout if stream closes before time limit
           statusLink = authFailed ? '🟨' : parser(finalResult, site);
-          console.log(`    - Status Link: ${statusLink}`);
+          const statusDesc = getStatusDesc(statusLink);
+          console.log(`    - Status Link: ${statusDesc} ${statusLink}`);
           resolve(statusLink);
         });
 

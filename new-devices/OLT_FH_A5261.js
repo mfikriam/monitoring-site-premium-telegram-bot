@@ -1,5 +1,8 @@
 import { Client as SSHClient } from 'ssh2';
 
+// IMPORT UTILS
+import getStatusDesc from '../utils/get-status-descriptions.js';
+
 function parser(resultStr) {
   const keyword = 'up';
   if (resultStr && resultStr.includes(keyword)) return '✅';
@@ -51,7 +54,8 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
         stream.on('close', () => {
           clearTimeout(timeoutHandle); // Clear the timeout if stream closes before time limit
           statusLink = authFailed ? '🟨' : parser(finalResult);
-          console.log(`    - Status Link: ${statusLink}`);
+          const statusDesc = getStatusDesc(statusLink);
+          console.log(`    - Status Link: ${statusDesc} ${statusLink}`);
           resolve(statusLink);
         });
 

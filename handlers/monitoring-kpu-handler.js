@@ -1,6 +1,9 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers'; // Required for parsing arguments with ES Modules
 
+// IMPORT UTILS
+import currentDateTime from '../utils/get-current-datetime.js';
+
 // IMPORT DATA
 import allowedKPUSites from '../data/allowed-kpu-sites.js';
 
@@ -92,6 +95,11 @@ async function getStatusLink(site) {
 }
 
 async function monitoringKPUHandler(msg) {
+  // GENERATE INITIAL MESSAGE
+  msg += `<b>REPORT MONITORING SITE KPU MSO TIF-4</b>\n`;
+  msg += `${currentDateTime()}\n`;
+  msg += `\n`;
+
   // INITIALIZE COUNT STATUS LINK
   const countStatusIpTransit = { up: 0, down: 0, others: 0 };
   const countStatusMetroBackhaul = { up: 0, down: 0, others: 0 };
@@ -192,6 +200,7 @@ async function monitoringKPUHandler(msg) {
     // ADD NEWLINE
     if (sortedSites.length > 0) msg += `\n`;
     if (siteLOS.length === 0) msg += `\n`;
+    msg += `\n`;
   }
 
   // COUNT TOTAL SITES
