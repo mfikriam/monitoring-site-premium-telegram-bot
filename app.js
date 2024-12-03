@@ -24,25 +24,28 @@ async function run() {
     const args = { ...argv }; // Convert `argv` to a plain object
     console.log(`Site: ${args.site || 'default'}, Server: ${args.server || 'default'}\n`);
 
+    // DEFINE DEFAULT PASSWORD
+    const defaultPassword = 'Dece2002';
+
     // DEFINE DEFAULT CONFIG
     const defaultConfig = {
       gpon: {
         nms: {
           host: process.env.GPON_NMS_HOST,
           username: process.env.GPON_NMS_USERNAME,
-          password: process.env.GPON_NMS_PASSWORD,
+          password: defaultPassword,
           port: Number(process.env.GPON_NMS_PORT),
         },
-        ne: { username: process.env.GPON_NE_USERNAME, password: process.env.GPON_NE_PASSWORD },
+        ne: { username: process.env.GPON_NE_USERNAME, password: defaultPassword },
       },
       metro: {
         nms: {
           host: process.env.METRO_NMS_HOST,
           username: process.env.METRO_NMS_USERNAME,
-          password: process.env.METRO_NMS_PASSWORD,
+          password: defaultPassword,
           port: Number(process.env.METRO_NMS_PORT),
         },
-        ne: { username: process.env.METRO_NE_USERNAME, password: process.env.METRO_NE_PASSWORD },
+        ne: { username: process.env.METRO_NE_USERNAME, password: defaultPassword },
       },
     };
 
