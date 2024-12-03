@@ -4,13 +4,13 @@ import { Client as SSHClient } from 'ssh2';
 import getStatusDesc from '../utils/get-status-descriptions.js';
 
 function parser(resultStr, site) {
-  // GigabitEthernet2/1/1.3557 current state : UP
-  const keyword = `${site.interface} current state : UP`;
+  // gei-0/1/1/7 is up
+  const keyword = `${site.interface_port_ne} is up`;
   if (resultStr && resultStr.includes(keyword)) return '✅';
   return '❌';
 }
 
-async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
+async function OLT({ nmsConfig, neConfig, site, timeout = 15000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();
@@ -21,7 +21,7 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
     // ON READY
     conn.on('ready', () => {
       // PRINT CONNECTION TITLE
-      const connTitle = `${sshConfig.username}@${sshConfig.host} ${sshConfig.password}`;
+      const connTitle = `${nmsConfig.username}@${nmsConfig.host} ${nmsConfig.password}`;
       console.log(`    - SSH Connection Established: ${connTitle}`);
 
       // TYPE & STREAM ON TERMINAL AFTER SSH
@@ -38,9 +38,9 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
         let finalResult = '';
         let loggedin = false;
         let authFailed = false;
-        let commandExec = false;
         let finished = false;
-        let streamClosed = false;
+        let firstCommandExec = false;
+        let secondCommandExec = false;
         let currentCommand = '';
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
@@ -67,61 +67,62 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
 
           // STORE THE STREAM DATA
           result += dataStr;
-          if (commandExec) finalResult += dataStr;
+          if (secondCommandExec) finalResult += dataStr;
 
-          // HANDLE FINGERPRINT PROMPT
-          if (dataStr.includes('(yes/no/[fingerprint])?') && !loggedin) {
-            console.log(`    - Fingerprint Prompt Detected: Sending yes`);
-            stream.write('yes\n');
+          // HANDLE NE AUTH: USERNAME
+          if (dataStr.includes('Username:') && !loggedin) {
+            console.log(`    - Entering NE Username: ${neConfig.username}`);
+            stream.write(`${neConfig.username}\n`);
           }
 
           // HANDLE NE AUTH: PASSWORD
-          if ((dataStr.includes('Enter password:') || dataStr.includes('Password:')) && !loggedin) {
+          if (dataStr.includes('Password:')) {
             loggedin = true;
             console.log(`    - Entering NE Password: ${neConfig.password}`);
             stream.write(`${neConfig.password}\n`);
           }
 
           // HANDLE NE AUTH FAILED
-          if (dataStr.includes('Received disconnect from')) {
+          if (dataStr.includes('% Information incomplete')) {
             authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
 
-          // HANDLE MAIN COMMAND
-          if (dataStr.includes(`<${site.hostname}>`) && !commandExec) {
-            commandExec = true;
-            currentCommand = `display interface ${site.interface}`;
-            console.log(`    - Executing Command: ${currentCommand}`);
+          // HANDLE FIRST COMMAND
+          if (dataStr.includes(`${site.hostname_ne}>`) && loggedin && !firstCommandExec) {
+            firstCommandExec = true;
+            currentCommand = `enable`;
+            console.log(`    - Executing First Command: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
+          }
+
+          // HANDLE SECOND COMMAND
+          if (dataStr.includes('#') && loggedin && firstCommandExec && !secondCommandExec) {
+            secondCommandExec = true;
+            currentCommand = `show interface ${site.interface_port_ne}`;
+            console.log(`    - Executing Second Command: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
           }
 
           // HANDLE PAGINATION
-          if (dataStr.includes('---- More ----') && !finished) {
+          if (dataStr.includes('--More--')) {
             finished = true;
             result += '\n';
             console.log('    - Pagination Detected: Sending Space');
             stream.write(' ');
           }
 
-          // HANDLE FINISHING
-          if (dataStr.includes('Current system time:') && !finished) {
-            finished = true;
-          }
-
           // HANDLE CLOSING SSH CONNECTION
-          if (finished && !streamClosed) {
-            streamClosed = true;
+          if (dataStr.includes(`${site.hostname_ne}#`) && finished) {
             console.log('    - SSH Stream Closed');
             conn.end();
           }
         });
 
-        // SSH TO NE VIA IP ADDRESS / HOSTNAME
-        currentCommand = `ssh ${neConfig.username}@${site.ip}`;
-        console.log(`    - Executing Command: ${currentCommand}`);
-        stream.write(`${currentCommand}\n`);
+        // TELNET TO NE VIA IP ADDRESS
+        console.log(`    - Executing Command: telnet ${site.ip_ne}`);
+        stream.write(`telnet ${site.ip_ne}\n`);
       });
     });
 
@@ -133,7 +134,7 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
     });
 
     // ON CONNECT
-    conn.connect(sshConfig);
+    conn.connect(nmsConfig);
   });
 }
 

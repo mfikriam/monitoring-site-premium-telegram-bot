@@ -1,6 +1,3 @@
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers'; // Required for parsing arguments with ES Modules
-
 // IMPORT UTILS
 import currentDateTime from '../utils/get-current-datetime.js';
 
@@ -11,90 +8,45 @@ import allowedKPUSites from '../data/allowed-kpu-sites.js';
 import excelHandler from './excel-handler.js';
 
 // IMPORT DEVICES
-import OLT_ZTE_CSERIES from '../new-devices/OLT_ZTE_CSERIES.js';
-import OLT_ALU from '../new-devices/OLT_ALU.js';
-import OLT_FH_A5161 from '../new-devices/OLT_FH_A5161.js';
-import OLT_FH_A5261 from '../new-devices/OLT_FH_A5261.js';
-import OLT_FH_A5261v2 from '../new-devices/OLT_FH_A5261v2.js';
-import METRO from '../new-devices/METRO.js';
+import OLT_ZTE_CSERIES from '../single-port-check-devices/OLT_ZTE_CSERIES.js';
+import OLT_ALU from '../single-port-check-devices/OLT_ALU.js';
+import OLT_FH_A5161 from '../single-port-check-devices/OLT_FH_A5161.js';
+import OLT_FH_A5261 from '../single-port-check-devices/OLT_FH_A5261.js';
+import OLT_FH_A5261v2 from '../single-port-check-devices/OLT_FH_A5261v2.js';
+import METRO from '../single-port-check-devices/METRO.js';
 
-async function getStatusLink(site) {
-  // GET SERVER LOCATION
-  const argv = yargs(hideBin(process.argv)) // Parse the command-line arguments
-    .option('server', {
-      alias: 's',
-      type: 'string',
-      description: 'Server location',
-      default: 'kosong', // Set a default value
-    })
-    .parse(); // Explicitly call .parse() when using ES Modules
-  let hostGPON;
-  let hostMETRO;
-  switch (argv.server) {
-    case 'sentul':
-      hostGPON = '10.60.190.16';
-      hostMETRO = '10.60.190.15';
-      break;
-    case 'jatinegara':
-      hostGPON = '10.62.165.21';
-      hostMETRO = '10.62.170.56';
-      break;
+async function getStatusLink(site, defaultConfig) {
+  // DEFINE SSH & NE CONFIG
+  let sshConfig = defaultConfig.gpon.nms;
+  let neConfig = defaultConfig.gpon.ne;
+  if (site.device === 'METRO') {
+    sshConfig = defaultConfig.metro.nms;
+    neConfig = defaultConfig.metro.ne;
+  }
+
+  // CHECK DEVICE
+  switch (site.device) {
+    case 'OLT ZTE C600':
+    case 'OLT ZTE C300':
+    case 'OLT ZTE C300v2':
+      return await OLT_ZTE_CSERIES({ sshConfig, site, neConfig });
+    case 'OLT ALU':
+      return await OLT_ALU({ sshConfig, site, neConfig });
+    case 'OLT FH A5161':
+      return await OLT_FH_A5161({ sshConfig, site, neConfig });
+    case 'OLT FH A5261':
+      return await OLT_FH_A5261({ sshConfig, site, neConfig });
+    case 'OLT FH A5261v2':
+      return await OLT_FH_A5261v2({ sshConfig, site, neConfig });
+    case 'METRO':
+      return await METRO({ sshConfig, site, neConfig });
     default:
-      hostGPON = process.env.GPON_NMS_HOST;
-      hostMETRO = process.env.METRO_NMS_HOST;
-      break;
+      console.log(`    - Device ${site.device} Not Recognized`);
+      return '🟨';
   }
-
-  // DEFICE SSH & NE CONFIG
-  let sshConfig = {};
-  let neConfig = {};
-  if (site.device === 'METRO') {
-    sshConfig = {
-      host: hostMETRO,
-      username: process.env.METRO_NMS_USERNAME,
-      password: process.env.METRO_NMS_PASSWORD,
-      port: Number(process.env.METRO_NMS_PORT),
-    };
-    neConfig = { username: process.env.METRO_NE_USERNAME, password: process.env.METRO_NE_PASSWORD };
-  } else {
-    sshConfig = {
-      host: hostGPON,
-      username: process.env.GPON_NMS_USERNAME,
-      password: process.env.GPON_NMS_PASSWORD,
-      port: Number(process.env.GPON_NMS_PORT),
-    };
-    neConfig = { username: process.env.GPON_NE_USERNAME, password: process.env.GPON_NE_PASSWORD };
-  }
-
-  if (site.device.includes('OLT ZTE C')) {
-    return await OLT_ZTE_CSERIES({ sshConfig, site, neConfig });
-  }
-
-  if (site.device === 'OLT ALU') {
-    return await OLT_ALU({ sshConfig, site, neConfig });
-  }
-
-  if (site.device === 'OLT FH A5161') {
-    return await OLT_FH_A5161({ sshConfig, site, neConfig });
-  }
-
-  if (site.device === 'OLT FH A5261') {
-    return await OLT_FH_A5261({ sshConfig, site, neConfig });
-  }
-
-  if (site.device === 'OLT FH A5261v2') {
-    return await OLT_FH_A5261v2({ sshConfig, site, neConfig });
-  }
-
-  if (site.device === 'METRO') {
-    return await METRO({ sshConfig, site, neConfig });
-  }
-
-  console.log(`    - Device ${site.device} Not Recognized`);
-  return '🟨';
 }
 
-async function monitoringKPUHandler(msg) {
+async function monitoringKPUHandler(msg, defaultConfig) {
   // GENERATE INITIAL MESSAGE
   msg += `<b>REPORT MONITORING SITE KPU MSO TIF-4</b>\n`;
   msg += `${currentDateTime()}\n`;
@@ -122,6 +74,7 @@ async function monitoringKPUHandler(msg) {
 
   // GET KPU CONFIG
   const kpuConfig = await excelHandler('kpu-config.xlsx');
+  if (kpuConfig.length === 0) return null;
 
   // GET ALLOWED KPU SITES
   const kpuSites = kpuConfig.filter((site) => allowedKPUSites.includes(site.name));
@@ -153,7 +106,7 @@ async function monitoringKPUHandler(msg) {
       console.log(`  > Link: ${site.device}`);
 
       // GET STATUS LINK
-      const status = await getStatusLink(site);
+      const status = await getStatusLink(site, defaultConfig);
 
       // UPDATE COUNT LINK STATUS
       switch (status) {
@@ -178,14 +131,13 @@ async function monitoringKPUHandler(msg) {
 
       // ADD STATUS TO TEXT MESSAGE
       if (subdistrict === 'IP TRANSIT' || subdistrict === 'METRO BACKHAUL') {
-        // msg += `${site.name}, ${site.note} ${status} | `;
         msg += `${site.note} ${status} | `;
       } else {
         msg += `${site.name} ${status} | `;
       }
     }
 
-    // ADD SITE LOS TO MESSAGE
+    // ADD DATEK SITE LOS TO MESSAGE
     if (siteLOS.length > 0) {
       msg += `\n\n`;
       siteLOS.forEach((site) => {

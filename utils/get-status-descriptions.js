@@ -4,8 +4,12 @@ function getStatusDesc(status) {
       return 'Working';
     case '❌':
       return 'LOS';
-    default:
+    case '⬛':
+      return 'Unmonitor';
+    case '🟨':
       return 'SSH Failed';
+    default:
+      return 'ERROR';
   }
 }
 

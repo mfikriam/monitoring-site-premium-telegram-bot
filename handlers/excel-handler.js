@@ -1,10 +1,21 @@
 import xlsx from 'xlsx';
 import path from 'path';
 
+// Function to transform keys to snake_case
+const transformKeys = (obj) => {
+  const snakeCase = (key) =>
+    key
+      .toLowerCase()
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/[^\w_]/g, '_'); // Remove non-alphanumeric characters except underscores
+
+  return Object.fromEntries(Object.entries(obj).map(([key, value]) => [snakeCase(key), value]));
+};
+
 async function excelHandler(filename) {
   try {
     // Resolve the file path
-    const filePath = path.resolve('config', filename);
+    const filePath = path.resolve('data', filename);
 
     // Read the Excel file
     const workbook = xlsx.readFile(filePath);
@@ -16,8 +27,10 @@ async function excelHandler(filename) {
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
 
-    // Return the parsed data
-    return data;
+    // Transform keys to snake_case
+    const transformedData = data.map(transformKeys);
+
+    return transformedData;
   } catch (error) {
     console.error('Error reading Excel file:', error.message);
     return [];

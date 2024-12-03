@@ -4,12 +4,12 @@ import { Client as SSHClient } from 'ssh2';
 import getStatusDesc from '../utils/get-status-descriptions.js';
 
 function parser(resultStr) {
-  const keyword = 'status : active';
+  const keyword = 'up';
   if (resultStr && resultStr.includes(keyword)) return '✅';
   return '❌';
 }
 
-async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
+async function OLT({ nmsConfig, neConfig, site, timeout = 15000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();
@@ -20,7 +20,7 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
     // ON READY
     conn.on('ready', () => {
       // PRINT CONNECTION TITLE
-      const connTitle = `${sshConfig.username}@${sshConfig.host} ${sshConfig.password}`;
+      const connTitle = `${nmsConfig.username}@${nmsConfig.host} ${nmsConfig.password}`;
       console.log(`    - SSH Connection Established: ${connTitle}`);
 
       // TYPE & STREAM ON TERMINAL AFTER SSH
@@ -89,37 +89,37 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
           }
 
           // HANDLE FIRST COMMAND
-          if (dataStr.includes(`${site.hostname}#`) && loggedin && !firstCommandExec) {
+          if (dataStr.includes(`${site.hostname_ne}#`) && loggedin && !firstCommandExec) {
             firstCommandExec = true;
-            currentCommand = `cd onu`;
+            currentCommand = `config`;
             console.log(`    - Executing First Command: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
           }
 
           // HANDLE SECOND COMMAND
-          if (dataStr.includes('#') && loggedin && firstCommandExec && !secondCommandExec) {
+          if (dataStr.includes(`${site.hostname_ne}#`) && loggedin && firstCommandExec && !secondCommandExec) {
             secondCommandExec = true;
-            const port = site.interface.split('/');
-            currentCommand = `show onu_state slot ${port[0]} pon ${port[1]} onu ${port[2]}`;
+            const port = site.interface_port_ne.split('/');
+            currentCommand = `show authorization 1/${port[0]}/${port[1]} | include ${site.sn_ont}`;
             console.log(`    - Executing Second Command: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
           }
 
-          // HANDLE PAGINATION
-          if (secondCommandExec && dataStr.includes('.')) {
+          // HANDLE FINISHING
+          if (secondCommandExec && (dataStr.includes(`up`) || dataStr.includes(`dn`))) {
             finished = true;
           }
 
           // HANDLE CLOSING SSH CONNECTION
-          if (dataStr.includes(`${site.hostname}\\onu#`) && finished) {
+          if (dataStr.includes(`${site.hostname_ne}(config)#`) && finished) {
             console.log('    - SSH Stream Closed');
             conn.end();
           }
         });
 
         // TELNET TO NE VIA IP ADDRESS / HOSTNAME
-        console.log(`    - Executing Command: telnet ${site.ip}`);
-        stream.write(`telnet ${site.ip}\n`);
+        console.log(`    - Executing Command: telnet ${site.ip_ne}`);
+        stream.write(`telnet ${site.ip_ne}\n`);
       });
     });
 
@@ -131,7 +131,7 @@ async function OLT({ sshConfig, site, neConfig, timeout = 15000 }) {
     });
 
     // ON CONNECT
-    conn.connect(sshConfig);
+    conn.connect(nmsConfig);
   });
 }
 
