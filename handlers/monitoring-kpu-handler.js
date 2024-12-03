@@ -1,49 +1,46 @@
+// IMPORT HANDLERS
+import excelHandler from './excel-handler.js';
+import singlePcdHandler from './single-pcd-handler.js';
+
 // IMPORT UTILS
 import currentDateTime from '../utils/get-current-datetime.js';
 
-// IMPORT DATA
-import allowedKPUSites from '../data/allowed-kpu-sites.js';
-
-// IMPORT HANDLERS
-import excelHandler from './excel-handler.js';
-
-// IMPORT DEVICES
-import OLT_ZTE_CSERIES from '../single-port-check-devices/OLT_ZTE_CSERIES.js';
-import OLT_ALU from '../single-port-check-devices/OLT_ALU.js';
-import OLT_FH_A5161 from '../single-port-check-devices/OLT_FH_A5161.js';
-import OLT_FH_A5261 from '../single-port-check-devices/OLT_FH_A5261.js';
-import OLT_FH_A5261v2 from '../single-port-check-devices/OLT_FH_A5261v2.js';
-import METRO from '../single-port-check-devices/METRO.js';
+function updateCounterKPU(
+  statusLink,
+  subdistrict,
+  countStatusIpTransit,
+  countStatusMetroBackhaul,
+  countStatusMetroChild,
+) {
+  switch (statusLink) {
+    case '✅':
+      if (subdistrict === 'IP TRANSIT') countStatusIpTransit.up++;
+      else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.up++;
+      else countStatusMetroChild.up++;
+      break;
+    case '❌':
+      if (subdistrict === 'IP TRANSIT') countStatusIpTransit.down++;
+      else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.down++;
+      else countStatusMetroChild.down++;
+      break;
+    default:
+      if (subdistrict === 'IP TRANSIT') countStatusIpTransit.others++;
+      else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.others++;
+      else countStatusMetroChild.others++;
+      break;
+  }
+}
 
 async function getStatusLink(site, defaultConfig) {
-  // DEFINE SSH & NE CONFIG
-  let sshConfig = defaultConfig.gpon.nms;
-  let neConfig = defaultConfig.gpon.ne;
-  if (site.device === 'METRO') {
-    sshConfig = defaultConfig.metro.nms;
-    neConfig = defaultConfig.metro.ne;
-  }
+  // INITIALIZE VARIABLES
+  const { ne } = site;
+  const nmsConfig = ne === 'METRO' ? { ...defaultConfig.metro.nms } : { ...defaultConfig.gpon.nms };
+  const neConfig = ne === 'METRO' ? { ...defaultConfig.metro.ne } : { ...defaultConfig.gpon.ne };
 
-  // CHECK DEVICE
-  switch (site.device) {
-    case 'OLT ZTE C600':
-    case 'OLT ZTE C300':
-    case 'OLT ZTE C300v2':
-      return await OLT_ZTE_CSERIES({ sshConfig, site, neConfig });
-    case 'OLT ALU':
-      return await OLT_ALU({ sshConfig, site, neConfig });
-    case 'OLT FH A5161':
-      return await OLT_FH_A5161({ sshConfig, site, neConfig });
-    case 'OLT FH A5261':
-      return await OLT_FH_A5261({ sshConfig, site, neConfig });
-    case 'OLT FH A5261v2':
-      return await OLT_FH_A5261v2({ sshConfig, site, neConfig });
-    case 'METRO':
-      return await METRO({ sshConfig, site, neConfig });
-    default:
-      console.log(`    - Device ${site.device} Not Recognized`);
-      return '🟨';
-  }
+  // PRINT LINK TITLE
+  console.log(`  > Link: ${ne}`);
+
+  return await singlePcdHandler({ nmsConfig, neConfig, site });
 }
 
 async function monitoringKPUHandler(msg, defaultConfig) {
@@ -52,10 +49,21 @@ async function monitoringKPUHandler(msg, defaultConfig) {
   msg += `${currentDateTime()}\n`;
   msg += `\n`;
 
-  // INITIALIZE COUNT STATUS LINK
+  // INITIALIZE VARIABLES
   const countStatusIpTransit = { up: 0, down: 0, others: 0 };
   const countStatusMetroBackhaul = { up: 0, down: 0, others: 0 };
   const countStatusMetroChild = { up: 0, down: 0, others: 0 };
+  let indexSite = 0;
+  const allowedSites = [];
+  // allowedSites.push('BIAK NUMFOR');
+
+  // GET DATA SITES
+  const kpuSites = await excelHandler('kpu-sites.xlsx');
+  if (kpuSites.length === 0) return null;
+
+  // FILTER SITES
+  const filteredSites =
+    allowedSites.length > 0 ? kpuSites.filter((site) => allowedSites.includes(site.site_name)) : kpuSites;
 
   // DEFINE SUBDISTRCTS
   const subdistricts = [
@@ -72,86 +80,55 @@ async function monitoringKPUHandler(msg, defaultConfig) {
     'METRO BACKHAUL',
   ];
 
-  // GET KPU CONFIG
-  const kpuConfig = await excelHandler('kpu-config.xlsx');
-  if (kpuConfig.length === 0) return null;
-
-  // GET ALLOWED KPU SITES
-  const kpuSites = kpuConfig.filter((site) => allowedKPUSites.includes(site.name));
-
-  // INITIALIZE INDEX SITES
-  let indexSite = 0;
-
-  // Metro E Child
-  for (let i = 0; i < subdistricts.length; i++) {
-    // GET SUBDISTRICT
-    const subdistrict = subdistricts[i];
-
-    // FILTER KPU CONFIG BASED ON SUBDISTRICT
-    const filteredSites = kpuSites.filter((site) => site.subdistrict === subdistrict);
+  // ACCESS SUBDISTRICT
+  for (const [indexSubdistrict, subdistrict] of subdistricts.entries()) {
+    // GET SITES BASED ON SUBDISTRICT
+    const subdistrictSites = filteredSites.filter((site) => site.subdistrict === subdistrict);
 
     // SORT SITES KPU BASED ON SITE NAME (ASCENDING)
-    const sortedSites = filteredSites.sort((a, b) => a.name.localeCompare(b.name));
+    const sortedSites = subdistrictSites.sort((a, b) => a.site_name.localeCompare(b.site_name));
 
-    // GENERATE SUBDISTRICT TITLE
-    msg += `<b>${i + 1}. ${subdistrict} : ${sortedSites.length} Site\n</b>`;
+    // ADD SUBDISTRCT TITLE TO MESSAGE
+    msg += `<b>${indexSubdistrict + 1}. ${subdistrict} : ${sortedSites.length} Site\n</b>`;
 
-    // INITIALIZED SITE LOS
-    const siteLOS = [];
+    // INITIALIZED LOS SITES
+    const losSites = [];
 
-    // GENERATE SITES STATUS
+    // MONITORING SITES
     for (const site of sortedSites) {
       // PRINT SITE TITLE
-      console.log(`${++indexSite}. ${site.subdistrict} - ${site.name}`);
-      console.log(`  > Link: ${site.device}`);
+      console.log(`${++indexSite}. ${site.subdistrict} - ${site.site_name}`);
 
       // GET STATUS LINK
-      const status = await getStatusLink(site, defaultConfig);
+      const statusLink = await getStatusLink(site, defaultConfig);
 
-      // UPDATE COUNT LINK STATUS
-      switch (status) {
-        case '✅':
-          if (subdistrict === 'IP TRANSIT') countStatusIpTransit.up++;
-          else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.up++;
-          else countStatusMetroChild.up++;
-          break;
-        case '❌':
-          siteLOS.push(site);
-          if (subdistrict === 'IP TRANSIT') countStatusIpTransit.down++;
-          else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.down++;
-          else countStatusMetroChild.down++;
-          break;
-        default:
-          siteLOS.push(site);
-          if (subdistrict === 'IP TRANSIT') countStatusIpTransit.others++;
-          else if (subdistrict === 'METRO BACKHAUL') countStatusMetroBackhaul.others++;
-          else countStatusMetroChild.others++;
-          break;
-      }
+      // UPDATE COUNTER
+      updateCounterKPU(statusLink, subdistrict, countStatusIpTransit, countStatusMetroBackhaul, countStatusMetroChild);
+
+      // ADD LOS SITE TO ARRAY
+      if (statusLink !== '✅') losSites.push(site);
 
       // ADD STATUS TO TEXT MESSAGE
-      if (subdistrict === 'IP TRANSIT' || subdistrict === 'METRO BACKHAUL') {
-        msg += `${site.note} ${status} | `;
-      } else {
-        msg += `${site.name} ${status} | `;
-      }
+      msg += `${
+        subdistrict === 'IP TRANSIT' || subdistrict === 'METRO BACKHAUL' ? site.note : site.site_name
+      } ${statusLink} | `;
     }
 
-    // ADD DATEK SITE LOS TO MESSAGE
-    if (siteLOS.length > 0) {
+    // ADD DATEK LOS SITE TO MESSAGE
+    if (losSites.length > 0) {
       msg += `\n\n`;
-      siteLOS.forEach((site) => {
-        if (subdistrict === 'IP TRANSIT' || subdistrict === 'METRO BACKHAUL') {
-          msg += `- ${site.name}, ${site.note}, ${site.hostname}, ${site.ip}, ${site.interface}, ${site.sn}\n`;
-        } else {
-          msg += `- ${site.name}, ${site.hostname}, ${site.ip}, ${site.interface}, ${site.sn}\n`;
-        }
+      losSites.forEach((site) => {
+        const details =
+          subdistrict === 'IP TRANSIT' || subdistrict === 'METRO BACKHAUL'
+            ? `${site.site_name}, ${site.note}, ${site.hostname_ne}, ${site.ip_ne}, ${site.interface_port_ne}, ${site.sn_ont}`
+            : `${site.site_name}, ${site.hostname_ne}, ${site.ip_ne}, ${site.interface_port_ne}, ${site.sn_ont}`;
+        msg += `- ${details}\n`;
       });
     }
 
     // ADD NEWLINE
     if (sortedSites.length > 0) msg += `\n`;
-    if (siteLOS.length === 0) msg += `\n`;
+    if (losSites.length === 0) msg += `\n`;
     msg += `\n`;
   }
 
@@ -161,10 +138,16 @@ async function monitoringKPUHandler(msg, defaultConfig) {
   const totalMetroChild = Object.values(countStatusMetroChild).reduce((sum, value) => sum + value, 0);
 
   // GENERATE SUMMARY
-  msg += `<b>Layanan KPU Milenet | Total |  Total UP | Total Down</b>\n`;
-  msg += `IP Transit | ${totalIpTransit} | ${countStatusIpTransit.up} | ${countStatusIpTransit.down}\n`;
-  msg += `Metro E Back Haul | ${totalMetroBackhaul} | ${countStatusMetroBackhaul.up} | ${countStatusMetroBackhaul.down}\n`;
-  msg += `Metro E Child | ${totalMetroChild} | ${countStatusMetroChild.up} | ${countStatusMetroChild.down}\n`;
+  let summary = '';
+  summary += `<b>Layanan KPU Milenet | Total |  Total UP | Total Down</b>\n`;
+  summary += `IP Transit | ${totalIpTransit} | ${countStatusIpTransit.up} | ${countStatusIpTransit.down}\n`;
+  summary += `Metro E Back Haul | ${totalMetroBackhaul} | ${countStatusMetroBackhaul.up} | ${countStatusMetroBackhaul.down}\n`;
+  summary += `Metro E Child | ${totalMetroChild} | ${countStatusMetroChild.up} | ${countStatusMetroChild.down}\n`;
+
+  // PRINT AND ADD SUMMARY TO MESSAGE
+  console.log();
+  console.log(summary);
+  msg += summary;
 
   return msg;
 }

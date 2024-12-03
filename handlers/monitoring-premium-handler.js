@@ -26,10 +26,9 @@ function updateCounterPremium(countStatus, statusLink1, statusLink2) {
 
 async function getStatusLink(site, defaultConfig) {
   // INITIALIZE VARIABLES
-  const ne = site.ne;
+  const { ne, link } = site;
   const nmsConfig = ne === 'METRO' ? { ...defaultConfig.metro.nms } : { ...defaultConfig.gpon.nms };
   const neConfig = ne === 'METRO' ? { ...defaultConfig.metro.ne } : { ...defaultConfig.gpon.ne };
-  const link = site.link;
 
   // PRINT LINK TITLE
   console.log(`  > ${link}: ${ne}`);
