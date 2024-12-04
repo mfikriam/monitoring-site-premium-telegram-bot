@@ -9,6 +9,7 @@ import sshErrorMsg from './utils/generate-ssh-error-msg.js';
 // IMPORT HANDLERS
 import monitoringPremiumHandler from './handlers/monitoring-premium-handler.js';
 import monitoringKPUHandler from './handlers/monitoring-kpu-handler.js';
+import monitoringIWIPHandler from './handlers/monitoring-iwip-handler.js';
 import sendBotMessage from './handlers/send-bot-msg-handler.js';
 
 // CREATE BOT INSTANCE
@@ -70,7 +71,7 @@ async function run() {
         botMsg = await monitoringKPUHandler(botMsg, defaultConfig);
         break;
       case 'iwip':
-        // botMsg = await monitoringIWIPHandler(botMsg, defaultConfig);
+        botMsg = await monitoringIWIPHandler(botMsg, defaultConfig);
         break;
     }
   } catch (err) {

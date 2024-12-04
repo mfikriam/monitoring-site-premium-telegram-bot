@@ -9,11 +9,11 @@ import L2SW_FH_S5800_SERIES from '../single-port-check-devices/L2SW_FH_S5800_SER
 import L2SW_ZTE_ZXR10 from '../single-port-check-devices/L2SW_ZTE_ZXR10.js';
 
 async function singlePcdHandler(deviceParams) {
-  // DEFINE DEVICE PARAMS
-  const { site } = deviceParams;
+  // GET SITE
+  const ne = deviceParams.site.ne;
 
   // CHECK NE
-  switch (site.ne) {
+  switch (ne) {
     case 'L2SW FH S5800':
     case 'L2SW FH S5800v2':
       return await L2SW_FH_S5800_SERIES(deviceParams);
@@ -40,7 +40,7 @@ async function singlePcdHandler(deviceParams) {
       return await OLT_ZTE_CSERIES(deviceParams);
 
     default:
-      console.log(`    - Device ${site.ne} Not Recognized`);
+      console.log(`    - Device ${ne} Not Recognized`);
       return '🟨';
   }
 }
