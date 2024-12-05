@@ -32,7 +32,9 @@ if "%choice%"=="1" (
     npm run start:premium:jatinegara
 ) else (
     echo Invalid choice. Exiting.
+    pause
     exit /b
 )
 
+echo Monitoring complete. Press any key to close this window.
 pause
