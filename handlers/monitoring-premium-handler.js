@@ -59,7 +59,6 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   const countStatus = { up2Link: 0, up1Link: 0, down2Link: 0, others: 0 };
   const allowedSites = [];
   // allowedSites.push('BLK001');
-  allowedSites.push('WTG001');
 
   // GET DATA SITES
   const premiumSites = await excelHandler('premium-sites.xlsx');
