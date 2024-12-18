@@ -7,6 +7,7 @@ import OLT_FH_A5261v2 from '../single-port-check-devices/OLT_FH_A5261v2.js';
 import METRO from '../single-port-check-devices/METRO.js';
 import L2SW_FH_S5800_SERIES from '../single-port-check-devices/L2SW_FH_S5800_SERIES.js';
 import L2SW_ZTE_ZXR10 from '../single-port-check-devices/L2SW_ZTE_ZXR10.js';
+import L2SW_RAISECOM from '../single-port-check-devices/L2SW_RAISECOM.js';
 
 async function singlePcdHandler(deviceParams) {
   // GET SITE
@@ -38,6 +39,9 @@ async function singlePcdHandler(deviceParams) {
     case 'OLT ZTE C300':
     case 'OLT ZTE C300v2':
       return await OLT_ZTE_CSERIES(deviceParams);
+
+    case 'L2SW RAISECOM':
+      return await L2SW_RAISECOM(deviceParams);
 
     default:
       console.log(`    - Device ${ne} Not Recognized`);
