@@ -24,6 +24,9 @@ function updateCounterPremium(countStatus, statusLink1, statusLink2) {
   }
 }
 
+// Function to add delay
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function getStatusLink(site, defaultConfig) {
   // INITIALIZE VARIABLES
   const { ne, link } = site;
@@ -83,7 +86,9 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
     // GET STATUS LINK
     const statusLink1 = await getStatusLink(link1, defaultConfig);
+    await delay(1000); // Wait for 1 second
     const statusLink2 = await getStatusLink(link2, defaultConfig);
+    await delay(1000); // Wait for 1 second
     const descLink1 = getStatusDesc(statusLink1);
     const descLink2 = getStatusDesc(statusLink2);
 
