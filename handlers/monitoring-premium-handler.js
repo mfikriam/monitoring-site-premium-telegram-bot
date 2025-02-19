@@ -84,13 +84,31 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     // PRINT SITE TITLE
     console.log(`${index + 1}. ${site.subdistrict} - ${site.site_id} - ${site.site_name}`);
 
-    // GET STATUS LINK
-    const statusLink1 = await getStatusLink(link1, defaultConfig);
-    await delay(1000); // Wait for 1 second
-    const statusLink2 = await getStatusLink(link2, defaultConfig);
-    await delay(1000); // Wait for 1 second
-    const descLink1 = getStatusDesc(statusLink1);
-    const descLink2 = getStatusDesc(statusLink2);
+    // GET STATUS LINK 1
+    let statusLink1, descLink1;
+    for (let i = 0; i < 3; i++) {
+      statusLink1 = await getStatusLink(link1, defaultConfig);
+      descLink1 = getStatusDesc(statusLink1);
+      if (descLink1 !== 'SSH Failed') break;
+
+      console.log(`    - Repeat SSH Connection (Attempt ${i + 2})`);
+      const delayTime = (i + 1) * 3000;
+      console.log(`    - Delaying ${delayTime / 1000} seconds...`);
+      await delay(delayTime);
+    }
+
+    // GET STATUS LINK 2
+    let statusLink2, descLink2;
+    for (let i = 0; i < 3; i++) {
+      statusLink2 = await getStatusLink(link2, defaultConfig);
+      descLink2 = getStatusDesc(statusLink2);
+      if (descLink2 !== 'SSH Failed') break;
+
+      console.log(`    - Repeat SSH Connection (Attempt ${i + 2})`);
+      const delayTime = (i + 1) * 3000;
+      console.log(`    - Delaying ${delayTime / 1000} seconds...`);
+      await delay(delayTime);
+    }
 
     // UPDATE COUNTER
     updateCounterPremium(countStatus, statusLink1, statusLink2);
