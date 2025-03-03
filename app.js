@@ -26,7 +26,7 @@ async function run() {
     console.log(`Site: ${args.site || 'default'}, Server: ${args.server || 'default'}\n`);
 
     // DEFINE DEFAULT PASSWORD
-    const defaultPassword = 'Febua2002';
+    const defaultPassword = 'Marea2002';
 
     // DEFINE DEFAULT CONFIG
     const defaultConfig = {
