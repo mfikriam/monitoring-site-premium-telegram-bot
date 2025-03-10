@@ -25,9 +25,9 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
 
   // Define ports
   const linksObj = [
-    { name: 'TWI-TBU', port: 'GE0/1/0.13', status: '-' },
-    { name: 'TBU-PGI', port: 'GE0/3/0.14', status: '-' },
-    { name: 'TBU-STG', port: 'GE0/1/1.15', status: '-' },
+    { name: 'TWI-TBU', port: 'GE0/1/0.13', status: 'SSH Failed' },
+    { name: 'TBU-PGI', port: 'GE0/3/0.14', status: 'SSH Failed' },
+    { name: 'TBU-STG', port: 'GE0/1/1.15', status: 'SSH Failed' },
   ];
 
   // Print Site Title
@@ -40,8 +40,28 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   await SMETRO({ nmsConfig, neConfig, site, linksObj });
 
   // Add links status to message
+  let isAllWorking = true;
   for (const link of linksObj) {
-    msg += `${link.name} (${link.port}) : ${link.status}\n`;
+    let statusDesc;
+    switch (link.status) {
+      case 'FULL':
+        statusDesc = '✅';
+        break;
+      case 'DOWN':
+        statusDesc = '❌';
+        isAllWorking = false;
+        break;
+      default:
+        statusDesc = '🟨';
+        break;
+    }
+    msg += `${link.name} : ${link.status} ${statusDesc}\n`;
+  }
+
+  // Add pic to message
+  if (!isAllWorking) {
+    msg += `\n`;
+    msg += `CC: @ipyamol @fatahud @SURVEILLANCE_TIF4_MSO7 @haris_eos7 @Nawir_EOS_MSO7`;
   }
 
   return msg;
