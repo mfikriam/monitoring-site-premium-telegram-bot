@@ -7,10 +7,11 @@ import { hideBin } from 'yargs/helpers';
 import sshErrorMsg from './utils/generate-ssh-error-msg.js';
 
 // IMPORT HANDLERS
+import sendBotMessage from './handlers/send-bot-msg-handler.js';
 import monitoringPremiumHandler from './handlers/monitoring-premium-handler.js';
 import monitoringKPUHandler from './handlers/monitoring-kpu-handler.js';
 import monitoringIWIPHandler from './handlers/monitoring-iwip-handler.js';
-import sendBotMessage from './handlers/send-bot-msg-handler.js';
+import monitoringDonggalaHandler from './handlers/monitoring-donggala-handler.js';
 
 // CREATE BOT INSTANCE
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
@@ -60,6 +61,15 @@ async function run() {
         defaultConfig.gpon.nms.host = process.env.GPON_NMS_HOST_JATINEGARA || '10.60.190.15';
         defaultConfig.metro.nms.host = process.env.METRO_NMS_HOST_JATINEGARA || '10.62.170.56';
         break;
+      case 'rno':
+        defaultConfig.gpon.nms.host = process.env.RNO_NMS_HOST;
+        defaultConfig.gpon.nms.username = process.env.RNO_NMS_USERNAME;
+        defaultConfig.gpon.nms.password = process.env.RNO_NMS_PASSWORD;
+
+        defaultConfig.metro.nms.host = process.env.RNO_NMS_HOST;
+        defaultConfig.metro.nms.username = process.env.RNO_NMS_USERNAME;
+        defaultConfig.metro.nms.password = process.env.RNO_NMS_PASSWORD;
+        break;
     }
 
     // GET MONITORING RESULT
@@ -72,6 +82,9 @@ async function run() {
         break;
       case 'iwip':
         botMsg = await monitoringIWIPHandler(botMsg, defaultConfig);
+        break;
+      case 'donggala':
+        botMsg = await monitoringDonggalaHandler(botMsg, defaultConfig);
         break;
     }
   } catch (err) {

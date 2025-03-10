@@ -13,7 +13,11 @@
     "start:kpu:jatinegara": "node app.js --site=kpu --server=jatinegara",
     "start:iwip": "node app.js --site=iwip",
     "start:iwip:sentul": "node app.js --site=iwip --server=sentul",
-    "start:iwip:jatinegara": "node app.js --site=iwip --server=jatinegara"
+    "start:iwip:jatinegara": "node app.js --site=iwip --server=jatinegara",
+    "start:donggala": "node app.js --site=donggala",
+    "start:donggala:sentul": "node app.js --site=donggala --server=sentul",
+    "start:donggala:jatinegara": "node app.js --site=donggala --server=jatinegara",
+    "start:donggala:rno": "node app.js --site=donggala --server=rno"
   },
   "keywords": [],
   "author": "mfikriam",
