@@ -9,7 +9,7 @@ function linksParser(resultString, linksObj) {
     if (match && match[1] === 'Full') {
       link.status = 'FULL';
     } else {
-      link.status = 'Down';
+      link.status = 'DOWN';
     }
 
     console.log(`    - Status Link ${link.name} (${link.port}): ${link.status}`);
