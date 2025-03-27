@@ -44,6 +44,7 @@ async function OLT({ nmsConfig, neConfig, site, timeout = 15000 }) {
         let authFailed = false;
         let commandExec = false;
         let finished = false;
+        let currentCommand = false;
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
         timeoutHandle = setTimeout(() => {
@@ -70,6 +71,13 @@ async function OLT({ nmsConfig, neConfig, site, timeout = 15000 }) {
           // STORE THE STREAM DATA
           result += dataStr;
           if (commandExec) finalResult += dataStr;
+
+          // Handle RNO NMS SSH To NE
+          if (!loggedin && dataStr.includes('rno7app:~$')) {
+            currentCommand = `telnet ${site.ip_ne}`;
+            console.log(`    - Executing Command On RNO Server: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
+          }
 
           // HANDLE NE AUTH: USERNAME
           if (dataStr.includes('Username:') && !loggedin) {
@@ -136,6 +144,7 @@ async function OLT({ nmsConfig, neConfig, site, timeout = 15000 }) {
 
     // ON ERROR
     conn.on('error', (err) => {
+      console.log(err);
       clearTimeout(timeoutHandle); // Clear the timeout on error
       console.log('    - SSH Connection Error (SSH Failed)');
       resolve('🟨');

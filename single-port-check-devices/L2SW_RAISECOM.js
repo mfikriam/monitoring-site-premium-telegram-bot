@@ -69,6 +69,13 @@ async function L2SW({ nmsConfig, neConfig, site, timeout = 15000 }) {
           result += dataStr;
           if (commandExec) finalResult += dataStr;
 
+          // Handle RNO NMS SSH To NE
+          if (!loggedin && dataStr.includes('rno7app:~$')) {
+            currentCommand = `telnet ${site.ip_ne}`;
+            console.log(`    - Executing Command On RNO Server: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
+          }
+
           // HANDLE NE AUTH: USERNAME
           if (dataStr.includes('Login:') && !loggedin) {
             console.log(`    - Entering NE Username: ${neConfig.username}`);

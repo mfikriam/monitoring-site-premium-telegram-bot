@@ -5,6 +5,7 @@ import singlePcdHandler from './single-pcd-handler.js';
 // IMPORT UTILS
 import currentDateTime from '../utils/get-current-datetime.js';
 import getStatusDesc from '../utils/get-status-descriptions.js';
+import getPICFO from '../utils/get-pic-fo.js';
 
 function updateCounterPremium(countStatus, statusLink1, statusLink2) {
   const lossStatus = ['❌', '⬛'];
@@ -74,6 +75,9 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // GET SITE IDS
   const uniqueSiteIds = [...new Set(filteredSites.map((item) => item.site_id))];
 
+  // Initialized Witels
+  const witels = [];
+
   // MONITORING SITES
   for (const [index, siteId] of uniqueSiteIds.entries()) {
     // GET LINK DATA
@@ -99,6 +103,8 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
     // GET STATUS LINK 2
     let statusLink2, descLink2;
+    statusLink2 = '✅';
+    descLink2 = getStatusDesc(statusLink1);
     for (let i = 0; i < 3; i++) {
       statusLink2 = await getStatusLink(link2, defaultConfig);
       descLink2 = getStatusDesc(statusLink2);
@@ -125,7 +131,10 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     if (statusLink2 === '❌') {
       msg += `- ${link2.link}: ${link2.hostname_ne}, ${link2.ip_ne}, ${link2.interface_port_ne}, ${link2.sn_ont}\n`;
     }
-    if (statusLink1 === '❌' || statusLink2 === '❌') msg += `\n`;
+    if (statusLink1 === '❌' || statusLink2 === '❌') {
+      witels.push(site.subdistrict);
+      msg += `\n`;
+    }
   }
 
   // GENERATE SUMMARY
@@ -136,6 +145,12 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // PRINT AND ADD SUMMARY TO MESSAGE
   console.log(summary);
   msg += summary;
+
+  // Add PIC Witels to Message
+  if (witels.length > 0) {
+    msg += `\n`;
+    msg += getPICFO(witels);
+  }
 
   return msg;
 }

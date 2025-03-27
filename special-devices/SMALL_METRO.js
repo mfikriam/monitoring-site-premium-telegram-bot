@@ -72,7 +72,7 @@ async function SMETRO({ nmsConfig, neConfig, site, linksObj, timeout = 15000 }) 
           if (commandExec) finalResult += dataStr;
 
           // Handle RNO NMS SSH To NE
-          if (dataStr.includes('rno7app:~$') && !loggedin) {
+          if (!loggedin && dataStr.includes('rno7app:~$')) {
             currentCommand = `ssh ${neConfig.username}@${site.ip_ne}`;
             console.log(`    - Executing Command On RNO Server: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
