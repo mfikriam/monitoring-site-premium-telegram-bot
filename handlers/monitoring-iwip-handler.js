@@ -1,125 +1,89 @@
-// IMPORT UTILS
+// Import Handlers
+import excelHandler from './excel-handler.js';
+
+// Import Utilities
 import currentDateTime from '../utils/get-current-datetime.js';
 
-const dateks = {
-  SFI: {
-    ne: 'METRO',
-    hostname_ne: 'ME-D7-SFI',
-    ip_ne: '172.31.242.196',
-    username: 'default_nms',
-    password: 'default_nms',
-  },
-  WDA: {
-    ne: 'METRO',
-    hostname_ne: 'ME-D7-WDA',
-    ip_ne: '172.31.242.185',
-    username: 'default_nms',
-    password: 'default_nms',
-  },
-  IWP: {
-    ne: 'METRO',
-    hostname_ne: 'ME-D7-IWP',
-    ip_ne: '172.31.242.183',
-    username: 'default_nms',
-    password: 'default_nms',
-  },
-  MBA: {
-    ne: 'METRO',
-    hostname_ne: 'ME-D7-MBA',
-    ip_ne: '172.31.242.187',
-    username: 'default_nms',
-    password: 'default_nms',
-  },
-  SSU020: {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-NEWSSU020',
-    ip_ne: '10.199.238.199',
-    username: 'admin',
-    password: 'Telkom123!',
-  },
-  SSU005: {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-SFI-SSU005-NEW',
-    ip_ne: '172.25.106.15',
-    username: 'mz19900215',
-    password: 'Maret@2025',
-  },
-  SSU043: {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-SFI-SSU043',
-    ip_ne: '10.199.238.81',
-    username: 'admin',
-    password: 'Lelilef1234',
-  },
-  'OLD-SSU007': {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-SFI-SSU007-OLD',
-    ip_ne: '10.199.238.200',
-    username: 'admin',
-    password: 'Lelilef1234',
-  },
-  'NEW-SSU007': {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-SFI-SSU007-NEW',
-    ip_ne: '172.25.106.11',
-    username: 'default_nms',
-    password: 'default_nms',
-  },
-  SSU015: {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-SFI-SSU-015',
-    ip_ne: '172.25.106.10',
-    username: 'default_nms',
-    password: 'default_nms',
-  },
-  MBA012: {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-SFI-MBA-0012',
-    ip_ne: '172.25.106.9',
-    username: 'default_nms',
-    password: 'default_nms',
-  },
-  BUL: {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-BUL',
-    ip_ne: '10.198.1.155',
-    username: 'raisecom',
-    password: 'raisecom',
-  },
-  SBM: {
-    ne: 'L2SW',
-    hostname_ne: 'SW-D7-SBM',
-    ip_ne: '10.198.1.156',
-    username: 'raisecom',
-    password: 'raisecom',
-  },
-};
+// Import Devices
+import METRO from '../iwip-devices/METRO.js';
+
+async function deviceHandler(defaultConfig, datek, resObj) {
+  // Define NMS and NE Config
+  const nmsConfig = datek.ne === 'METRO' ? { ...defaultConfig.metro.nms } : { ...defaultConfig.gpon.nms };
+  const neConfig = datek.ne === 'METRO' ? { ...defaultConfig.metro.ne } : { ...defaultConfig.gpon.ne };
+
+  // Overwrite NE Config if provided
+  if (datek.username_ne && datek.username_ne !== 'username_nms') {
+    neConfig.username = datek.username_ne;
+    neConfig.password = datek.password_ne;
+  }
+
+  const deviceParams = { nmsConfig, neConfig, datek, resObj };
+
+  switch (datek.ne) {
+    case 'METRO':
+      return await METRO(deviceParams);
+
+    default:
+      console.log(`    - Device ${ne} Not Recognized`);
+  }
+}
 
 async function monitoringPremiumHandler(msg, defaultConfig) {
+  // Get Dateks
+  const dateks = await excelHandler('datek-cluster-iwip.xlsx');
+
   // Initial Message
   msg += `<b>REPORT MONITORING CLUSTER IWIP</b>\n`;
   msg += `${currentDateTime()}\n`;
   msg += `\n`;
 
   // Declare variables
-  let devicesRoute = [];
   let routes = [];
+  let interfacesNE = [];
 
-  // ----------------- 1. Ring Metro-E via DWDM -----------------
-  routes = [
-    { src: 'SFI', dest: 'WDA', interface: 'Eth-Trunk25' },
-    { src: 'WDA', dest: 'IWP', interface: 'Eth-Trunk11' },
-    { src: 'IWP', dest: 'MBA', interface: 'Eth-Trunk25' },
-    { src: 'MBA', dest: 'SFI', interface: 'Eth-Trunk23' },
+  // ----------------------------- 1. Ring Metro-E via DWDM -----------------------------
+
+  // Print title
+  console.log(`[Ring Metro-E via DWDM]\n`);
+
+  // Define routes for Metro-E via DWDM
+  routes = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
+  // routes = ['SFI', 'WDA'];
+
+  // Define Interfaces NE for Metro-E via DWDM
+  interfacesNE = [
+    { src: 'SFI', dest: 'WDA', group_interface: 'Eth-Trunk25' },
+    { src: 'WDA', dest: 'IWP', group_interface: 'Eth-Trunk11' },
+    { src: 'IWP', dest: 'MBA', group_interface: 'Eth-Trunk25' },
+    { src: 'MBA', dest: 'SFI', group_interface: 'Eth-Trunk23' },
   ];
 
-  devicesRoute = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
+  // Add title to message
   msg += `1. Ring Metro-E via DWDM\n`;
-  msg += `${devicesRoute[0]}`;
-  for (let i = 0; i < devicesRoute.length - 1; i++) {
-    const route1 = devicesRoute[i];
-    const route2 = devicesRoute[i];
-    msg += ` &lt;&gt; ${route2}`;
+  msg += `${routes[0]}`;
+
+  // Loop through routes and update datek objects
+  for (let i = 0; i < routes.length - 1; i++) {
+    // Get source and destination
+    const src = routes[i];
+    const dest = routes[i + 1];
+
+    // Find the datek object for the source
+    const datek = dateks.find((data) => data.id === src);
+    datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
+
+    // Initialize result object
+    const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
+
+    // Print route title
+    console.log(`${i + 1}. ${src} → ${dest}`);
+
+    // Call deviceHandler
+    await deviceHandler(defaultConfig, datek, resObj);
+
+    // Add result object to message
+    msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
   }
   msg += `\n`;
 
