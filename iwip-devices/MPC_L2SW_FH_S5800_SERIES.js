@@ -1,44 +1,41 @@
 import { Client as SSHClient } from 'ssh2';
 
-function resultParser(resultStr, resObj) {
-  // Parsing Max BW & Current BW
-  const portBWMatch = resultStr.match(/Cur-BW\(M\):\s*(\d+)/);
-  const maxBWMatch = resultStr.match(/Max-BW\(M\):\s*(\d+)/);
-  const currentBW = portBWMatch ? parseInt(portBWMatch[1], 10) / 1000 : 0; // Convert To Gbps
-  const maxBW = maxBWMatch ? parseInt(maxBWMatch[1], 10) / 1000 : 0; // Convert To Gbps
+function resultParser(resObj) {
+  // Initialized Current BW & Max Bw
+  resObj.currentBW = 0;
+  resObj.maxBW = resObj.interfaces.length * 10;
 
   // Initialize statusLink to UP
-  let statusLink = '✅';
+  resObj.statusLink = '✅';
 
-  // Parse interfaces
-  const portEntries = [];
-  const regex = /Interface\s+([\w/]+),\s+link\s+(\w+),/g;
-  let match;
-  while ((match = regex.exec(resultStr)) !== null) {
-    const portName = match[1];
-    let portStatus = match[2];
+  for (const intf of resObj.interfaces) {
+    // Get result string
+    const resultString = intf.resultString;
 
-    // // Test LOS intarface
-    // if (portName === '10ge1/1/4') portStatus = 'LOS';
+    // Update interface status
+    if (resultString && resultString.includes('admin state : up') && resultString.includes('current state : up')) {
+      resObj.currentBW += 10;
+      intf.portStatus = 'Up';
+    } else {
+      resObj.statusLink = '❌';
+      intf.portStatus = 'LOS';
+    }
 
-    portEntries.push({ portName, portStatus });
-    if (portStatus !== 'Up') statusLink = '❌';
+    // // Test LOS interface
+    // if (intf.portName === '10gigaethernet 1/0/16') {
+    //   resObj.currentBW -= 10;
+    //   resObj.statusLink = '❌';
+    //   intf.portStatus = 'LOS';
+    // }
 
-    // Print status per port
-    console.log(`    - Status Interface ${portName}: ${portStatus} ${portStatus === 'Up' ? '✅' : '❌'}`);
+    // Print status port
+    console.log(
+      `    - Status Interface ${intf.portName}: ${intf.portStatus} ${intf.portStatus === 'Up' ? '✅' : '❌'}`,
+    );
   }
 
-  // If no matches were found
-  if (portEntries.length === 0) statusLink = '🟨';
-
   // Print status link
-  console.log(`    - Status Link: ${currentBW}/${maxBW} ${statusLink}`);
-
-  // Update the result object with the parsed values
-  resObj.currentBW = currentBW;
-  resObj.maxBW = maxBW;
-  resObj.statusLink = statusLink;
-  resObj.interfaces = portEntries;
+  console.log(`    - Status Link: ${resObj.statusLink}`);
 }
 
 async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
@@ -65,11 +62,13 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
         // INITIALIZED VARIABLES
         let result = '';
-        let finalResult = '';
+        let linkResult = '';
         let loggedin = false;
         let commandExec = false;
         let finished = false;
+        let streamClosed = false;
         let currentCommand = '';
+        let indexLink = 0;
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
         timeoutHandle = setTimeout(() => {
@@ -82,7 +81,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle); // Clear the timeout if stream closes before time limit
-          resultParser(finalResult, resObj); // Parse the result when the stream closes
+          resultParser(resObj); // Parse the result when the stream closes
           resolve();
         });
 
@@ -93,7 +92,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
           // STORE THE STREAM DATA
           result += dataStr;
-          if (commandExec) finalResult += dataStr;
+          if (commandExec) linkResult += dataStr;
 
           // Ensure RNO NMS SSH To NE is ready
           if (!loggedin && dataStr.includes('rno7app:~$')) {
@@ -122,24 +121,33 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
           }
 
           // HANDLE MAIN COMMAND
-          if (dataStr.includes(`${datek.hostname_ne}#`) && !commandExec) {
+          if (dataStr.includes(`${datek.hostname_ne}#`) && !commandExec && indexLink < resObj.interfaces.length) {
             commandExec = true;
-            currentCommand = `show interface ${datek.group_interface}`;
+            currentCommand = `show interface ${resObj.interfaces[indexLink].portName}`;
             console.log(`    - Executing Command: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
           }
 
           // HANDLE PAGINATION
-          if (dataStr.includes('--More--')) {
-            finished = true;
+          if (dataStr.includes('--More--') && !finished) {
             result += '\n';
+            resObj.interfaces[indexLink].resultString = linkResult;
+            linkResult = '';
+            commandExec = false;
+            indexLink++;
             console.log('    - Pagination Detected: Sending Space');
             stream.write(' ');
           }
 
+          // HANDLE FINISHING
+          if (dataStr.includes(`${datek.hostname_ne}#`) && !finished && indexLink === resObj.interfaces.length) {
+            finished = true;
+          }
+
           // HANDLE CLOSING SSH CONNECTION
-          if (dataStr.includes(`${datek.hostname_ne}#`) && finished) {
-            console.log('    - SSH Stream Closed');
+          if (finished && !streamClosed) {
+            streamClosed = true;
+            console.log('    - Closing SSH Connection');
             conn.end();
           }
         });

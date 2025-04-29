@@ -8,6 +8,7 @@ import currentDateTime from '../utils/get-current-datetime.js';
 import SPC_METRO from '../iwip-devices/SPC_METRO.js';
 import MPC_METRO from '../iwip-devices/MPC_METRO.js';
 import SPC_L2SW_FH_S5800_SERIES from '../iwip-devices/SPC_L2SW_FH_S5800_SERIES.js';
+import MPC_L2SW_FH_S5800_SERIES from '../iwip-devices/MPC_L2SW_FH_S5800_SERIES.js';
 
 async function deviceHandler(defaultConfig, datek, resObj) {
   // Define NMS and NE Config
@@ -29,6 +30,8 @@ async function deviceHandler(defaultConfig, datek, resObj) {
       return await MPC_METRO(deviceParams);
     case 'SPC_L2SW_FH_S5800_SERIES':
       return await SPC_L2SW_FH_S5800_SERIES(deviceParams);
+    case 'MPC_L2SW_FH_S5800_SERIES':
+      return await MPC_L2SW_FH_S5800_SERIES(deviceParams);
     default:
       console.log(`    - Device ${ne} Not Recognized`);
   }
@@ -133,8 +136,8 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // // Initialize result object
   // const resObj = {
-  //   numUpInterfaces: 0,
-  //   numInterfaces: datek.interfaces_ne.length,
+  //   numUpInterfaces: #,
+  //   numInterfaces: #,
   //   statusLink: '🟨',
   //   interfaces: datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' })),
   // };
@@ -167,10 +170,10 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Define routes for L2SW
   routes = [
     // 'WDA',
-    'SSU020',
-    'IWP',
-    // 'SSU005',
-    // 'SSU043',
+    // 'SSU020',
+    // 'IWP',
+    'SSU005',
+    'SSU043',
     // 'OLD-SSU007',
     // 'NEW-SSU007',
     // 'SSU015',
@@ -186,6 +189,8 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   interfacesNE = [
     { src: 'WDA', dest: 'SSU020', group_interface: 'Eth-Trunk5', ne: 'SPC_METRO' },
     { src: 'SSU020', dest: 'IWP', group_interface: 'eth-trunk 2', ne: 'SPC_L2SW_FH_S5800_SERIES' },
+    { src: 'IWP', dest: 'SSU005', group_interface: 'Eth-Trunk10', ne: 'SPC_METRO' },
+    { src: 'SSU005', dest: 'SSU043', interfaces_ne: ['10gigaethernet 1/0/16'], ne: 'MPC_L2SW_FH_S5800_SERIES' },
   ];
 
   // Add title to message
@@ -206,11 +211,24 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
     // Find the datek object for the source
     const datek = dateks.find((data) => data.id === src);
-    datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
+
+    // Get Datek NE
     datek.ne = interfacesNE.find((route) => route.src === src && route.dest === dest).ne;
 
     // Initialize result object
     const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
+
+    // Check if SPC or MPC
+    if (datek.group_interface) {
+      // Get Datek Group Interface
+      datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
+    } else {
+      // Get Datek Interfaces NE
+      datek.interfaces_ne = interfacesNE.find((route) => route.src === src && route.dest === dest).interfaces_ne;
+
+      // Get Datek Interfaces
+      resObj.interfaces = datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' }));
+    }
 
     // Call deviceHandler
     await deviceHandler(defaultConfig, datek, resObj);

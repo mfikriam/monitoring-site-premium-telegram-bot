@@ -1,7 +1,11 @@
 import { Client as SSHClient } from 'ssh2';
 
 function resultsParser(resObj) {
-  // Assume status link is UP;
+  // Initialized Num Interfaces
+  resObj.numUpInterfaces = 0;
+  resObj.numInterfaces = resObj.interfaces.length;
+
+  // Initialize statusLink to UP
   resObj.statusLink = '✅';
 
   for (const intf of resObj.interfaces) {
