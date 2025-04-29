@@ -1,29 +1,31 @@
 import { Client as SSHClient } from 'ssh2';
 
 function resultParser(resultStr, resObj) {
-  // Parse the result string to extract current and max bandwidth
-  const currentBW = resultStr.match(/Current BW:\s*(\d+)G/)[1];
-  const maxBW = resultStr.match(/Maximal BW:\s*(\d+)G/)[1];
+  // Parsing Max BW & Current BW
+  const portBWMatch = resultStr.match(/Cur-BW\(M\):\s*(\d+)/);
+  const maxBWMatch = resultStr.match(/Max-BW\(M\):\s*(\d+)/);
+  const currentBW = portBWMatch ? parseInt(portBWMatch[1], 10) / 1000 : 0; // Convert To Gbps
+  const maxBW = maxBWMatch ? parseInt(maxBWMatch[1], 10) / 1000 : 0; // Convert To Gbps
 
   // Initialize statusLink to UP;
   let statusLink = '✅';
 
-  // Check if the result string contains the expected format
+  // Parse interfaces
   const portEntries = [];
-  const regex = /(GigabitEthernet[\d/]+)\s+(\S+)/g;
+  const regex = /Interface\s+([\w/]+),\s+link\s+(\w+),/g;
   let match;
   while ((match = regex.exec(resultStr)) !== null) {
     const portName = match[1];
     let portStatus = match[2];
 
     // // Test LOS intarface
-    // if (portName === 'GigabitEthernet3/1/1') portStatus = 'LOS';
+    // if (portName === '10ge1/1/4') portStatus = 'LOS';
 
     portEntries.push({ portName, portStatus });
-    if (portStatus !== 'UP') statusLink = '❌';
+    if (portStatus !== 'Up') statusLink = '❌';
 
-    // Print status port
-    console.log(`    - Status Interface ${portName}: ${portStatus} ${portStatus === 'UP' ? '✅' : '❌'}`);
+    // Print status per port
+    console.log(`    - Status Interface ${portName}: ${portStatus} ${portStatus === 'Up' ? '✅' : '❌'}`);
   }
 
   // If no matches were found
@@ -39,7 +41,7 @@ function resultParser(resultStr, resObj) {
   resObj.interfaces = portEntries;
 }
 
-async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
+async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();
@@ -67,7 +69,6 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let loggedin = false;
         let commandExec = false;
         let finished = false;
-        let streamClosed = false;
         let currentCommand = '';
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
@@ -94,42 +95,42 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
           result += dataStr;
           if (commandExec) finalResult += dataStr;
 
-          // Handle RNO NMS SSH To NE
+          // Ensure RNO NMS SSH To NE is ready
           if (!loggedin && dataStr.includes('rno7app:~$')) {
-            currentCommand = `ssh ${neConfig.username}@${datek.ip_ne}`;
+            currentCommand = `telnet ${site.ip_ne}`;
             console.log(`    - Executing Command On RNO Server: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
           }
 
-          // HANDLE FINGERPRINT PROMPT
-          if (dataStr.includes('(yes/no/[fingerprint])?') && !loggedin) {
-            console.log(`    - Fingerprint Prompt Detected: Sending yes`);
-            stream.write('yes\n');
+          // HANDLE NE AUTH: USERNAME
+          if (dataStr.includes('Username:') && !loggedin) {
+            console.log(`    - Entering NE Username: ${neConfig.username}`);
+            stream.write(`${neConfig.username}\n`);
           }
 
           // HANDLE NE AUTH: PASSWORD
-          if ((dataStr.includes('Enter password:') || dataStr.includes('Password:')) && !loggedin) {
+          if (dataStr.includes('Password:') && !loggedin) {
             loggedin = true;
             console.log(`    - Entering NE Password: ${neConfig.password}`);
             stream.write(`${neConfig.password}\n`);
           }
 
           // HANDLE NE AUTH FAILED
-          if (dataStr.includes('Received disconnect from')) {
+          if (dataStr.includes('%No such user or bad password.')) {
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
 
           // HANDLE MAIN COMMAND
-          if (dataStr.includes(`<${datek.hostname_ne}>`) && !commandExec) {
+          if (dataStr.includes(`${datek.hostname_ne}#`) && !commandExec) {
             commandExec = true;
-            currentCommand = `display interface ${datek.group_interface}`;
+            currentCommand = `show interface ${datek.group_interface}`;
             console.log(`    - Executing Command: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
           }
 
           // HANDLE PAGINATION
-          if (dataStr.includes('---- More ----') && !finished) {
+          if (dataStr.includes('--More--')) {
             finished = true;
             result += '\n';
             console.log('    - Pagination Detected: Sending Space');
@@ -137,17 +138,15 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
           }
 
           // HANDLE CLOSING SSH CONNECTION
-          if (dataStr.includes(`<${datek.hostname_ne}>`) && finished && !streamClosed) {
-            streamClosed = true;
+          if (dataStr.includes(`${datek.hostname_ne}#`) && finished) {
             console.log('    - SSH Stream Closed');
             conn.end();
           }
         });
 
-        // SSH TO NE VIA IP ADDRESS
-        currentCommand = `ssh ${neConfig.username}@${datek.ip_ne}`;
-        console.log(`    - Executing Command: ${currentCommand}`);
-        stream.write(`${currentCommand}\n`);
+        // TELNET TO NE VIA IP ADDRESS
+        console.log(`    - Executing Command: telnet ${datek.ip_ne}`);
+        stream.write(`telnet ${datek.ip_ne}\n`);
       });
     });
 
@@ -163,4 +162,4 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
   });
 }
 
-export default METRO;
+export default L2SW;

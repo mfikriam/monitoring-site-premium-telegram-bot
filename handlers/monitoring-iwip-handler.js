@@ -7,6 +7,7 @@ import currentDateTime from '../utils/get-current-datetime.js';
 // Import Devices
 import SPC_METRO from '../iwip-devices/SPC_METRO.js';
 import MPC_METRO from '../iwip-devices/MPC_METRO.js';
+import SPC_L2SW_FH_S5800_SERIES from '../iwip-devices/SPC_L2SW_FH_S5800_SERIES.js';
 
 async function deviceHandler(defaultConfig, datek, resObj) {
   // Define NMS and NE Config
@@ -26,6 +27,8 @@ async function deviceHandler(defaultConfig, datek, resObj) {
       return await SPC_METRO(deviceParams);
     case 'MPC_METRO':
       return await MPC_METRO(deviceParams);
+    case 'SPC_L2SW_FH_S5800_SERIES':
+      return await SPC_L2SW_FH_S5800_SERIES(deviceParams);
     default:
       console.log(`    - Device ${ne} Not Recognized`);
   }
@@ -43,28 +46,154 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Declare variables
   let routes = [];
   let interfacesNE = [];
+  let losInterfaces = [];
 
   // ----------------------------- 1. Ring Metro-E via DWDM -----------------------------
 
+  // // Print title
+  // console.log(`[Ring Metro-E via DWDM]\n`);
+
+  // // Define routes for Metro-E via DWDM
+  // routes = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
+
+  // // Define Interfaces NE for Metro-E via DWDM
+  // interfacesNE = [
+  //   { src: 'SFI', dest: 'WDA', group_interface: 'Eth-Trunk25' },
+  //   { src: 'WDA', dest: 'IWP', group_interface: 'Eth-Trunk11' },
+  //   { src: 'IWP', dest: 'MBA', group_interface: 'Eth-Trunk25' },
+  //   { src: 'MBA', dest: 'SFI', group_interface: 'Eth-Trunk23' },
+  // ];
+
+  // // Add title to message
+  // msg += `1. Ring Metro-E via DWDM\n`;
+  // msg += `${routes[0]}`;
+
+  // // Loop through routes and update datek objects
+  // for (let i = 0; i < routes.length - 1; i++) {
+  //   // Get source and destination
+  //   const src = routes[i];
+  //   const dest = routes[i + 1];
+
+  //   // Print route title
+  //   console.log(`${i + 1}. ${src} → ${dest}`);
+
+  //   // Find the datek object for the source
+  //   const datek = dateks.find((data) => data.id === src);
+  //   datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
+
+  //   // Initialize result object
+  //   const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
+
+  //   // Call deviceHandler
+  //   datek.ne = 'SPC_METRO';
+  //   await deviceHandler(defaultConfig, datek, resObj);
+
+  //   // Check if any interfaces is down
+  //   if (resObj.statusLink === '❌') {
+  //     resObj.interfaces.forEach((data) => {
+  //       if (data.portStatus !== 'UP') losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} LOS ❌`);
+  //     });
+  //   }
+
+  //   // Add result object to message
+  //   msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
+  // }
+
+  // // Add LOS interfaces to message
+  // if (losInterfaces.length > 0) {
+  //   msg += `\n\nDown :\n`;
+  //   losInterfaces.forEach((data) => {
+  //     msg += `${data}\n`;
+  //   });
+  // }
+
+  // // Add new line
+  // msg += `\n`;
+
+  // --------------------------- End of 1. Ring Metro-E via DWDM ---------------------------
+
+  // ----------------------------- 2. Ring Metro-E via Radio IP -----------------------------
+
+  // // Print title
+  // console.log();
+  // console.log(`[Ring Metro-E via Radio IP]\n`);
+
+  // // Add title to message
+  // msg += `\n`;
+  // msg += `2. Ring Metro-E via Radio IP\n`;
+
+  // // Get datek for WDA
+  // const datek = dateks.find((data) => data.id === 'WDA');
+
+  // // Print route title
+  // console.log(`1. WDA → IWP`);
+
+  // // Set interface NE
+  // datek.interfaces_ne = ['Eth-Trunk1.10', 'Eth-Trunk1.11', 'Eth-Trunk1.12', 'Eth-Trunk1.13'];
+
+  // // Initialize result object
+  // const resObj = {
+  //   numUpInterfaces: 0,
+  //   numInterfaces: datek.interfaces_ne.length,
+  //   statusLink: '🟨',
+  //   interfaces: datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' })),
+  // };
+
+  // // Call deviceHandler
+  // datek.ne = 'MPC_METRO';
+  // await deviceHandler(defaultConfig, datek, resObj);
+
+  // // Add result object to message
+  // msg += `WDA &lt;${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink}&gt; IWP`;
+
+  // // Check if any interfaces is down
+  // if (resObj.statusLink === '❌') {
+  //   msg += `\n\nDown :\n`;
+  //   resObj.interfaces.forEach((data) => {
+  //     if (data.portStatus !== 'UP') msg += `- ${datek.hostname_ne} ${data.portName} LOS ❌\n`;
+  //   });
+  // }
+
+  // // Add new line
+  // msg += `\n`;
+
+  // -------------------------- End of 2. Ring Metro-E via Radio IP --------------------------
+
+  // ------------------------------------- 3. Ring L2SW -------------------------------------
+
   // Print title
-  console.log(`[Ring Metro-E via DWDM]\n`);
+  console.log(`[Ring L2SW]\n`);
 
-  // Define routes for Metro-E via DWDM
-  routes = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
+  // Define routes for L2SW
+  routes = [
+    // 'WDA',
+    'SSU020',
+    'IWP',
+    // 'SSU005',
+    // 'SSU043',
+    // 'OLD-SSU007',
+    // 'NEW-SSU007',
+    // 'SSU015',
+    // 'MBA012',
+    // 'MBA',
+    // 'BUL',
+    // 'SFI',
+    // 'SBM',
+    // 'MBA',
+  ];
 
-  // Define Interfaces NE for Metro-E via DWDM
+  // Define Interfaces NE for L2SW
   interfacesNE = [
-    { src: 'SFI', dest: 'WDA', group_interface: 'Eth-Trunk25' },
-    { src: 'WDA', dest: 'IWP', group_interface: 'Eth-Trunk11' },
-    { src: 'IWP', dest: 'MBA', group_interface: 'Eth-Trunk25' },
-    { src: 'MBA', dest: 'SFI', group_interface: 'Eth-Trunk23' },
+    { src: 'WDA', dest: 'SSU020', group_interface: 'Eth-Trunk5', ne: 'SPC_METRO' },
+    { src: 'SSU020', dest: 'IWP', group_interface: 'eth-trunk 2', ne: 'SPC_L2SW_FH_S5800_SERIES' },
   ];
 
   // Add title to message
-  msg += `1. Ring Metro-E via DWDM\n`;
+  msg += `3. Ring L2SW\n`;
   msg += `${routes[0]}`;
 
-  const losInterfaces = [];
+  // Initialized LOS interfaces
+  losInterfaces = [];
 
   // Loop through routes and update datek objects
   for (let i = 0; i < routes.length - 1; i++) {
@@ -78,18 +207,20 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     // Find the datek object for the source
     const datek = dateks.find((data) => data.id === src);
     datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
+    datek.ne = interfacesNE.find((route) => route.src === src && route.dest === dest).ne;
 
     // Initialize result object
     const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
 
     // Call deviceHandler
-    datek.ne = 'SPC_METRO';
     await deviceHandler(defaultConfig, datek, resObj);
 
     // Check if any interfaces is down
     if (resObj.statusLink === '❌') {
       resObj.interfaces.forEach((data) => {
-        if (data.portStatus !== 'UP') losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} LOS ❌`);
+        if (data.portStatus !== 'UP' && data.portStatus !== 'Up') {
+          losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} LOS ❌`);
+        }
       });
     }
 
@@ -99,65 +230,12 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // Add LOS interfaces to message
   if (losInterfaces.length > 0) {
-    msg += `\nDown :\n`;
+    msg += `\n\nDown :\n`;
     losInterfaces.forEach((data) => {
       msg += `${data}\n`;
     });
   }
 
-  // Add new line
-  msg += `\n`;
-
-  // --------------------------- End of 1. Ring Metro-E via DWDM ---------------------------
-
-  // ----------------------------- 2. Ring Metro-E via Radio IP -----------------------------
-
-  // Print title
-  console.log();
-  console.log(`[Ring Metro-E via Radio IP]\n`);
-
-  // Add title to message
-  msg += `\n`;
-  msg += `2. Ring Metro-E via Radio IP\n`;
-
-  // Get datek for WDA
-  const datek = dateks.find((data) => data.id === 'WDA');
-
-  // Print route title
-  console.log(`1. WDA → IWP`);
-
-  // Set interface NE
-  datek.interfaces_ne = ['Eth-Trunk1.10', 'Eth-Trunk1.11', 'Eth-Trunk1.12', 'Eth-Trunk1.13'];
-
-  // Initialize result object
-  const resObj = {
-    numUpInterfaces: 0,
-    numInterfaces: datek.interfaces_ne.length,
-    statusLink: '🟨',
-    interfaces: datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' })),
-  };
-
-  // Call deviceHandler
-  datek.ne = 'MPC_METRO';
-  await deviceHandler(defaultConfig, datek, resObj);
-
-  // Add result object to message
-  msg += `WDA &lt;${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink}&gt; IWP`;
-
-  // Check if any interfaces is down
-  if (resObj.statusLink === '❌') {
-    msg += `\n\nDown :\n`;
-    resObj.interfaces.forEach((data) => {
-      if (data.portStatus !== 'UP') msg += `- ${datek.hostname_ne} ${data.portName} LOS ❌\n`;
-    });
-  }
-
-  // Add new line
-  msg += `\n`;
-
-  // -------------------------- End of 2. Ring Metro-E via Radio IP --------------------------
-
-  // ------------------------------------- 3. Ring L2SW -------------------------------------
   // ---------------------------------- End of 3. Ring L2SW ----------------------------------
 
   return msg;

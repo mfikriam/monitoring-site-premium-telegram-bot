@@ -46,7 +46,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
     // ON READY
     conn.on('ready', () => {
       // PRINT CONNECTION TITLE
-      const connTitle = `${nmsConfig.username}@${nmsConfig.host} ${nmsConfig.password}`;
+      const connTitle = `ssh ${nmsConfig.username}@${nmsConfig.host} ${nmsConfig.password}`;
       console.log(`    - SSH Connection Established: ${connTitle}`);
 
       // TYPE & STREAM ON TERMINAL AFTER SSH
