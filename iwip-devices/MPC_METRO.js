@@ -96,6 +96,13 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
           result += dataStr;
           if (commandExec) linkResult += dataStr;
 
+          // Handle RNO NMS SSH To NE
+          if (!loggedin && dataStr.includes('rno7app:~$')) {
+            currentCommand = `ssh ${neConfig.username}@${datek.ip_ne}`;
+            console.log(`    - Executing Command On RNO Server: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
+          }
+
           // HANDLE FINGERPRINT PROMPT
           if (dataStr.includes('(yes/no/[fingerprint])?') && !loggedin) {
             console.log(`    - Fingerprint Prompt Detected: Sending yes`);

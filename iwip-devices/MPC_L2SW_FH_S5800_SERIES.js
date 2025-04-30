@@ -95,7 +95,6 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         stream.on('data', (data) => {
           // CONVERT STREAM DATA TO STRING
           const dataStr = data.toString();
-          // console.log(dataStr);
 
           // STORE THE STREAM DATA
           result += dataStr;
@@ -103,7 +102,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
           // Ensure RNO NMS SSH To NE is ready
           if (!loggedin && dataStr.includes('rno7app:~$')) {
-            currentCommand = `telnet ${site.ip_ne}`;
+            currentCommand = `telnet ${datek.ip_ne}`;
             console.log(`    - Executing Command On RNO Server: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
           }

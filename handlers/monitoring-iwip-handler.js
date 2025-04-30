@@ -9,6 +9,7 @@ import SPC_METRO from '../iwip-devices/SPC_METRO.js';
 import MPC_METRO from '../iwip-devices/MPC_METRO.js';
 import SPC_L2SW_FH_S5800_SERIES from '../iwip-devices/SPC_L2SW_FH_S5800_SERIES.js';
 import MPC_L2SW_FH_S5800_SERIES from '../iwip-devices/MPC_L2SW_FH_S5800_SERIES.js';
+import MPC_L2SW_RAISECOM from '../iwip-devices/MPC_L2SW_RAISECOM.js';
 
 async function deviceHandler(defaultConfig, datek, resObj) {
   // Define NMS and NE Config
@@ -32,6 +33,8 @@ async function deviceHandler(defaultConfig, datek, resObj) {
       return await SPC_L2SW_FH_S5800_SERIES(deviceParams);
     case 'MPC_L2SW_FH_S5800_SERIES':
       return await MPC_L2SW_FH_S5800_SERIES(deviceParams);
+    case 'MPC_L2SW_RAISECOM':
+      return await MPC_L2SW_RAISECOM(deviceParams);
     default:
       console.log(`    - Device ${ne} Not Recognized`);
   }
@@ -169,20 +172,20 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // Define routes for L2SW
   routes = [
-    // 'WDA',
-    // 'SSU020',
-    // 'IWP',
-    // 'SSU005',
-    // 'SSU043',
-    // 'OLD-SSU007',
-    // 'NEW-SSU007',
-    // 'SSU015',
-    // 'MBA012',
-    // 'MBA',
+    'WDA',
+    'SSU020',
+    'IWP',
+    'SSU005',
+    'SSU043',
+    'OLD-SSU007',
+    'NEW-SSU007',
+    'SSU015',
+    'MBA012',
+    'MBA',
     'BUL',
     'SFI',
-    // 'SBM',
-    // 'MBA',
+    'SBM',
+    'MBA',
   ];
 
   // Define Interfaces NE for L2SW
@@ -215,7 +218,19 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
       doublePagination: true,
     },
     { src: 'MBA', dest: 'BUL', group_interface: 'Eth-Trunk9', ne: 'SPC_METRO' },
-    { src: 'BUL', dest: 'SFI', group_interface: 'Eth-Trunk9', ne: 'SPC_METRO' },
+    {
+      src: 'BUL',
+      dest: 'SFI',
+      interfaces_ne: ['port-channel 1'],
+      ne: 'MPC_L2SW_RAISECOM',
+    },
+    { src: 'SFI', dest: 'SBM', group_interface: 'Eth-Trunk13', ne: 'SPC_METRO' },
+    {
+      src: 'SBM',
+      dest: 'MBA',
+      interfaces_ne: ['port-channel 2'],
+      ne: 'MPC_L2SW_RAISECOM',
+    },
   ];
 
   // Add title to message
