@@ -12,8 +12,13 @@ function resultParser(resObj) {
     // Get result string
     const resultString = intf.resultString;
 
+    // Check keyword
+    const isUp =
+      (resultString.includes('admin state : up') && resultString.includes('current state : up')) ||
+      resultString.includes('Admin state is up,operation state is up');
+
     // Update interface status
-    if (resultString && resultString.includes('admin state : up') && resultString.includes('current state : up')) {
+    if (resultString && isUp) {
       resObj.currentBW += 10;
       intf.portStatus = 'Up';
     } else {
@@ -69,6 +74,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let streamClosed = false;
         let currentCommand = '';
         let indexLink = 0;
+        let indexPagination = 0;
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
         timeoutHandle = setTimeout(() => {
@@ -89,6 +95,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         stream.on('data', (data) => {
           // CONVERT STREAM DATA TO STRING
           const dataStr = data.toString();
+          // console.log(dataStr);
 
           // STORE THE STREAM DATA
           result += dataStr;
@@ -120,21 +127,34 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
             conn.end();
           }
 
-          // HANDLE MAIN COMMAND
+          // Handle Main Command
           if (dataStr.includes(`${datek.hostname_ne}#`) && !commandExec && indexLink < resObj.interfaces.length) {
-            commandExec = true;
             currentCommand = `show interface ${resObj.interfaces[indexLink].portName}`;
             console.log(`    - Executing Command: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
+            commandExec = true;
           }
 
-          // HANDLE PAGINATION
+          // Handle Paginations
           if (dataStr.includes('--More--') && !finished) {
+            indexPagination++;
             result += '\n';
-            resObj.interfaces[indexLink].resultString = linkResult;
-            linkResult = '';
-            commandExec = false;
-            indexLink++;
+
+            if (datek.doublePagination) {
+              if (indexPagination === 2) {
+                resObj.interfaces[indexLink].resultString = linkResult;
+                linkResult = '';
+                commandExec = false;
+                indexLink++;
+                indexPagination = 0;
+              }
+            } else {
+              resObj.interfaces[indexLink].resultString = linkResult;
+              linkResult = '';
+              commandExec = false;
+              indexLink++;
+            }
+
             console.log('    - Pagination Detected: Sending Space');
             stream.write(' ');
           }

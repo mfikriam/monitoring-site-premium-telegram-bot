@@ -172,15 +172,15 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     // 'WDA',
     // 'SSU020',
     // 'IWP',
-    'SSU005',
-    'SSU043',
+    // 'SSU005',
+    // 'SSU043',
     // 'OLD-SSU007',
     // 'NEW-SSU007',
     // 'SSU015',
     // 'MBA012',
     // 'MBA',
-    // 'BUL',
-    // 'SFI',
+    'BUL',
+    'SFI',
     // 'SBM',
     // 'MBA',
   ];
@@ -191,6 +191,31 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     { src: 'SSU020', dest: 'IWP', group_interface: 'eth-trunk 2', ne: 'SPC_L2SW_FH_S5800_SERIES' },
     { src: 'IWP', dest: 'SSU005', group_interface: 'Eth-Trunk10', ne: 'SPC_METRO' },
     { src: 'SSU005', dest: 'SSU043', interfaces_ne: ['10gigaethernet 1/0/16'], ne: 'MPC_L2SW_FH_S5800_SERIES' },
+    { src: 'SSU043', dest: 'OLD-SSU007', interfaces_ne: ['xgigaethernet 1/1/1'], ne: 'MPC_L2SW_FH_S5800_SERIES' },
+    { src: 'OLD-SSU007', dest: 'NEW-SSU007', interfaces_ne: ['gigaethernet 1/0/1'], ne: 'MPC_L2SW_FH_S5800_SERIES' },
+    {
+      src: 'NEW-SSU007',
+      dest: 'SSU015',
+      interfaces_ne: ['xgigaethernet 1/0/17', 'xgigaethernet 1/0/18', 'xgigaethernet 1/0/19', 'xgigaethernet 1/0/20'],
+      ne: 'MPC_L2SW_FH_S5800_SERIES',
+      doublePagination: true,
+    },
+    {
+      src: 'SSU015',
+      dest: 'MBA012',
+      interfaces_ne: ['xgigaethernet 1/0/45', 'xgigaethernet 1/0/46', 'xgigaethernet 1/0/47', 'xgigaethernet 1/0/48'],
+      ne: 'MPC_L2SW_FH_S5800_SERIES',
+      doublePagination: true,
+    },
+    {
+      src: 'MBA012',
+      dest: 'MBA',
+      interfaces_ne: ['xgigaethernet 1/0/39', 'xgigaethernet 1/0/40', 'xgigaethernet 1/0/41', 'xgigaethernet 1/0/42'],
+      ne: 'MPC_L2SW_FH_S5800_SERIES',
+      doublePagination: true,
+    },
+    { src: 'MBA', dest: 'BUL', group_interface: 'Eth-Trunk9', ne: 'SPC_METRO' },
+    { src: 'BUL', dest: 'SFI', group_interface: 'Eth-Trunk9', ne: 'SPC_METRO' },
   ];
 
   // Add title to message
@@ -219,12 +244,16 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
 
     // Check if SPC or MPC
-    if (datek.group_interface) {
+    if (datek.ne.includes('SPC')) {
       // Get Datek Group Interface
       datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
     } else {
       // Get Datek Interfaces NE
       datek.interfaces_ne = interfacesNE.find((route) => route.src === src && route.dest === dest).interfaces_ne;
+
+      // Get Double Pagination
+      datek.doublePagination =
+        interfacesNE.find((route) => route.src === src && route.dest === dest).doublePagination || null;
 
       // Get Datek Interfaces
       resObj.interfaces = datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' }));
