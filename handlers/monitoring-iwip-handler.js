@@ -56,118 +56,130 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // ----------------------------- 1. Ring Metro-E via DWDM -----------------------------
 
-  // // Print title
-  // console.log(`[Ring Metro-E via DWDM]\n`);
+  // Print title
+  console.log(`[Ring Metro-E via DWDM]\n`);
 
-  // // Define routes for Metro-E via DWDM
-  // routes = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
+  // Define routes for Metro-E via DWDM
+  routes = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
 
-  // // Define Interfaces NE for Metro-E via DWDM
-  // interfacesNE = [
-  //   { src: 'SFI', dest: 'WDA', group_interface: 'Eth-Trunk25' },
-  //   { src: 'WDA', dest: 'IWP', group_interface: 'Eth-Trunk11' },
-  //   { src: 'IWP', dest: 'MBA', group_interface: 'Eth-Trunk25' },
-  //   { src: 'MBA', dest: 'SFI', group_interface: 'Eth-Trunk23' },
-  // ];
+  // Define Interfaces NE for Metro-E via DWDM
+  interfacesNE = [
+    { src: 'SFI', dest: 'WDA', group_interface: 'Eth-Trunk25', ne: 'SPC_METRO' },
+    { src: 'WDA', dest: 'IWP', group_interface: 'Eth-Trunk11', ne: 'SPC_METRO' },
+    { src: 'IWP', dest: 'MBA', group_interface: 'Eth-Trunk25', ne: 'SPC_METRO' },
+    { src: 'MBA', dest: 'SFI', group_interface: 'Eth-Trunk23', ne: 'SPC_METRO' },
+  ];
 
-  // // Add title to message
-  // msg += `1. Ring Metro-E via DWDM\n`;
-  // msg += `${routes[0]}`;
+  // Add title to message
+  msg += `1. Ring Metro-E via DWDM\n`;
+  msg += `${routes[0]}`;
 
-  // // Loop through routes and update datek objects
-  // for (let i = 0; i < routes.length - 1; i++) {
-  //   // Get source and destination
-  //   const src = routes[i];
-  //   const dest = routes[i + 1];
+  // Loop through routes and update datek objects
+  for (let i = 0; i < routes.length - 1; i++) {
+    // Get source and destination
+    const src = routes[i];
+    const dest = routes[i + 1];
 
-  //   // Print route title
-  //   console.log(`${i + 1}. ${src} → ${dest}`);
+    // Print route title
+    console.log(`${i + 1}. ${src} → ${dest}`);
 
-  //   // Find the datek object for the source
-  //   const datek = dateks.find((data) => data.id === src);
-  //   datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
+    // Find the datek object for the source
+    const datek = dateks.find((data) => data.id === src);
+    const datekDest = dateks.find((data) => data.id === dest);
 
-  //   // Initialize result object
-  //   const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
+    // Get Datek NE
+    datek.ne = interfacesNE.find((route) => route.src === src && route.dest === dest).ne;
 
-  //   // Call deviceHandler
-  //   datek.ne = 'SPC_METRO';
-  //   await deviceHandler(defaultConfig, datek, resObj);
+    // Get Datek Group Interface
+    datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
 
-  //   // Check if any interfaces is down
-  //   if (resObj.statusLink === '❌') {
-  //     resObj.interfaces.forEach((data) => {
-  //       if (data.portStatus !== 'UP') losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} LOS ❌`);
-  //     });
-  //   }
+    // Initialize result object
+    const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
 
-  //   // Add result object to message
-  //   msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
-  // }
+    // Call deviceHandler
+    datek.ne = 'SPC_METRO';
+    await deviceHandler(defaultConfig, datek, resObj);
 
-  // // Add LOS interfaces to message
-  // if (losInterfaces.length > 0) {
-  //   msg += `\n\nDown :\n`;
-  //   losInterfaces.forEach((data) => {
-  //     msg += `${data}\n`;
-  //   });
-  // }
+    // Check if any interfaces is down
+    if (resObj.statusLink === '❌') {
+      resObj.interfaces.forEach((data) => {
+        if (data.portStatus !== 'UP')
+          losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
+      });
+    }
 
-  // // Add new line
-  // msg += `\n`;
+    // Add result object to message
+    msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
+  }
+
+  // Add LOS interfaces to message
+  if (losInterfaces.length > 0) {
+    msg += `\n\nDown :\n`;
+    losInterfaces.forEach((data) => {
+      msg += `${data}\n`;
+    });
+  }
+
+  // Add new line
+  msg += `\n`;
 
   // --------------------------- End of 1. Ring Metro-E via DWDM ---------------------------
 
   // ----------------------------- 2. Ring Metro-E via Radio IP -----------------------------
 
-  // // Print title
-  // console.log();
-  // console.log(`[Ring Metro-E via Radio IP]\n`);
+  // Print title
+  console.log();
+  console.log(`[Ring Metro-E via Radio IP]\n`);
 
-  // // Add title to message
-  // msg += `\n`;
-  // msg += `2. Ring Metro-E via Radio IP\n`;
+  // Add title to message
+  msg += `\n`;
+  msg += `2. Ring Metro-E via Radio IP\n`;
 
-  // // Get datek for WDA
-  // const datek = dateks.find((data) => data.id === 'WDA');
+  // Get datek for WDA
+  const datek = dateks.find((data) => data.id === 'WDA');
+  const datekDest = dateks.find((data) => data.id === 'IWP');
 
-  // // Print route title
-  // console.log(`1. WDA → IWP`);
+  // Print route title
+  console.log(`1. WDA → IWP`);
 
-  // // Set interface NE
-  // datek.interfaces_ne = ['Eth-Trunk1.10', 'Eth-Trunk1.11', 'Eth-Trunk1.12', 'Eth-Trunk1.13'];
+  // Set interface NE
+  datek.interfaces_ne = ['Eth-Trunk1.10', 'Eth-Trunk1.11', 'Eth-Trunk1.12', 'Eth-Trunk1.13'];
 
-  // // Initialize result object
-  // const resObj = {
-  //   numUpInterfaces: #,
-  //   numInterfaces: #,
-  //   statusLink: '🟨',
-  //   interfaces: datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' })),
-  // };
+  // Set Datek NE
+  datek.ne = 'MPC_METRO';
 
-  // // Call deviceHandler
-  // datek.ne = 'MPC_METRO';
-  // await deviceHandler(defaultConfig, datek, resObj);
+  // Initialize result object
+  const resObj = {
+    numUpInterfaces: '#',
+    numInterfaces: '#',
+    statusLink: '🟨',
+    interfaces: datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' })),
+  };
 
-  // // Add result object to message
-  // msg += `WDA &lt;${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink}&gt; IWP`;
+  // Call deviceHandler
+  await deviceHandler(defaultConfig, datek, resObj);
 
-  // // Check if any interfaces is down
-  // if (resObj.statusLink === '❌') {
-  //   msg += `\n\nDown :\n`;
-  //   resObj.interfaces.forEach((data) => {
-  //     if (data.portStatus !== 'UP') msg += `- ${datek.hostname_ne} ${data.portName} LOS ❌\n`;
-  //   });
-  // }
+  // Add result object to message
+  msg += `WDA &lt;${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink}&gt; IWP`;
 
-  // // Add new line
-  // msg += `\n`;
+  // Check if any interfaces is down
+  if (resObj.statusLink === '❌') {
+    msg += `\n\nDown :\n`;
+    resObj.interfaces.forEach((data) => {
+      if (data.portStatus !== 'UP')
+        msg += `- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌\n`;
+    });
+  }
+
+  // Add new line
+  msg += `\n`;
 
   // -------------------------- End of 2. Ring Metro-E via Radio IP --------------------------
 
   // ------------------------------------- 3. Ring L2SW -------------------------------------
 
   // Print title
+  console.log();
   console.log(`[Ring L2SW]\n`);
 
   // Define routes for L2SW
@@ -234,6 +246,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   ];
 
   // Add title to message
+  msg += `\n`;
   msg += `3. Ring L2SW\n`;
   msg += `${routes[0]}`;
 
@@ -251,6 +264,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
     // Find the datek object for the source
     const datek = dateks.find((data) => data.id === src);
+    const datekDest = dateks.find((data) => data.id === dest);
 
     // Get Datek NE
     datek.ne = interfacesNE.find((route) => route.src === src && route.dest === dest).ne;
@@ -281,7 +295,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     if (resObj.statusLink === '❌') {
       resObj.interfaces.forEach((data) => {
         if (data.portStatus !== 'UP' && data.portStatus !== 'Up') {
-          losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} LOS ❌`);
+          losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
         }
       });
     }
