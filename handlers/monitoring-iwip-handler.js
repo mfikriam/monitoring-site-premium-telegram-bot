@@ -74,7 +74,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   ];
 
   // Add title to message
-  msg += `1. Ring Metro-E via DWDM\n`;
+  msg += `<b>1. Ring Metro-E via DWDM</b>\n`;
   msg += `${routes[0]}`;
 
   // Loop through routes and update datek objects
@@ -117,7 +117,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // Add LOS interfaces to message
   if (losInterfaces.length > 0) {
-    msg += `\n\nDown :\n`;
+    msg += `\n\n<b>Link Down :</b>\n`;
     losInterfaces.forEach((data) => {
       msg += `${data}\n`;
     });
@@ -136,7 +136,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // Add title to message
   msg += `\n`;
-  msg += `2. Ring Metro-E via Radio IP\n`;
+  msg += `<b>2. Ring Metro-E via Radio IP</b>\n`;
 
   // Get datek for WDA
   const datek = dateks.find((data) => data.id === 'WDA');
@@ -167,7 +167,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // Check if any interfaces is down
   if (resObj.statusLink === '❌') {
-    msg += `\n\nDown :\n`;
+    msg += `\n\n<b>Link Down :</b>\n`;
     resObj.interfaces.forEach((data) => {
       if (data.portStatus !== 'UP')
         msg += `- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌\n`;
@@ -247,7 +247,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // Add title to message
   msg += `\n`;
-  msg += `3. Ring L2SW\n`;
+  msg += `<b>3. Ring L2SW</b>\n`;
   msg += `${routes[0]}`;
 
   // Initialized LOS interfaces
@@ -306,7 +306,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
   // Add LOS interfaces to message
   if (losInterfaces.length > 0) {
-    msg += `\n\nDown :\n`;
+    msg += `\n\n<b>Link Down :</b>\n`;
     losInterfaces.forEach((data) => {
       msg += `${data}\n`;
     });
