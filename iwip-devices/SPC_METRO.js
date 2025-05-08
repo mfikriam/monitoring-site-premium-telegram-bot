@@ -1,9 +1,19 @@
 import { Client as SSHClient } from 'ssh2';
 
+function parseBandwidth(match) {
+  if (!match) return 0;
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  return unit === 'M' ? Math.round(value / 1000) : value; // Convert M to G, round to nearest GB
+}
+
 function resultParser(resultStr, resObj) {
   // Parse the result string to extract current and max bandwidth
-  const currentBW = resultStr.match(/Current BW:\s*(\d+)G/)[1];
-  const maxBW = resultStr.match(/Maximal BW:\s*(\d+)G/)[1];
+  const currentBWMatch = resultStr.match(/Current BW:\s*(\d+)([GM])/);
+  const maxBWMatch = resultStr.match(/Maximal BW:\s*(\d+)([GM])/);
+
+  const currentBW = parseBandwidth(currentBWMatch);
+  const maxBW = parseBandwidth(maxBWMatch);
 
   // Initialize statusLink to UP;
   let statusLink = '✅';
