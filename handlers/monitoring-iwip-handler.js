@@ -56,6 +56,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   let routes = [];
   let interfacesNE = [];
   let losInterfaces = [];
+  const unmonitDevices = [];
 
   // ----------------------------- 1. Ring Metro-E via DWDM -----------------------------
 
@@ -111,6 +112,9 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
       });
     }
 
+    // Check if device is unmonit
+    if (resObj.statusLink === '🟨') unmonitDevices.push(datek.id);
+
     // Add result object to message
     msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
   }
@@ -118,9 +122,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Add LOS interfaces to message
   if (losInterfaces.length > 0) {
     msg += `\n\n<b>Link Down :</b>\n`;
-    losInterfaces.forEach((data) => {
-      msg += `${data}\n`;
-    });
+    msg += losInterfaces.join('\n');
   }
 
   // Add new line
@@ -137,6 +139,9 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Add title to message
   msg += `\n`;
   msg += `<b>2. Ring Metro-E via Radio IP</b>\n`;
+
+  // Initialized LOS interfaces
+  losInterfaces = [];
 
   // Get datek for WDA
   const datek = dateks.find((data) => data.id === 'WDA');
@@ -165,13 +170,21 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Add result object to message
   msg += `WDA &lt;${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink}&gt; IWP`;
 
+  // Check if device is unmonit
+  if (resObj.statusLink === '🟨') unmonitDevices.push(datek.id);
+
   // Check if any interfaces is down
   if (resObj.statusLink === '❌') {
-    msg += `\n\n<b>Link Down :</b>\n`;
     resObj.interfaces.forEach((data) => {
       if (data.portStatus !== 'UP')
-        msg += `- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌\n`;
+        losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
     });
+  }
+
+  // Add LOS interfaces to message
+  if (losInterfaces.length > 0) {
+    msg += `\n\n<b>Link Down :</b>\n`;
+    msg += losInterfaces.join('\n');
   }
 
   // Add new line
@@ -280,10 +293,6 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
       // Get Datek Interfaces NE
       datek.interfaces_ne = interfacesNE.find((route) => route.src === src && route.dest === dest).interfaces_ne;
 
-      // Get Double Pagination
-      datek.doublePagination =
-        interfacesNE.find((route) => route.src === src && route.dest === dest).doublePagination || null;
-
       // Get Datek Interfaces
       resObj.interfaces = datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' }));
     }
@@ -300,6 +309,9 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
       });
     }
 
+    // Check if device is unmonit
+    if (resObj.statusLink === '🟨') unmonitDevices.push(datek.id);
+
     // Add result object to message
     msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
   }
@@ -307,9 +319,13 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Add LOS interfaces to message
   if (losInterfaces.length > 0) {
     msg += `\n\n<b>Link Down :</b>\n`;
-    losInterfaces.forEach((data) => {
-      msg += `${data}\n`;
-    });
+    msg += losInterfaces.join('\n');
+  }
+
+  // Add Unmonit Devices to Message
+  if (unmonitDevices.length > 0) {
+    msg += `\n\n<b>NE Unmonit :</b>\n`;
+    msg += [...new Set(unmonitDevices)].join(', '); // Remove duplicates and join the elements
   }
 
   // ---------------------------------- End of 3. Ring L2SW ----------------------------------

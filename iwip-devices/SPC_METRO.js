@@ -80,9 +80,10 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let streamClosed = false;
         let currentCommand = '';
 
-        // SET A TIMEOUT TO LIMIT STREAMING TIME
+        // Set a timeout to limit streaming time
         timeoutHandle = setTimeout(() => {
           console.log('    - Streaming Timeout Exceeded');
+          resObj.statusLink = '🟨'; // Mark status as timeout
           stream.end(); // End the stream if timeout is reached
           console.log('    - SSH Stream Closed');
           conn.end(); // Close the SSH connection

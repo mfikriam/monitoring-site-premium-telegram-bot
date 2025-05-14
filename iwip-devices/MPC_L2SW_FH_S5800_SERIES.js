@@ -76,9 +76,10 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let indexLink = 0;
         let indexPagination = 0;
 
-        // SET A TIMEOUT TO LIMIT STREAMING TIME
+        // Set a timeout to limit streaming time
         timeoutHandle = setTimeout(() => {
           console.log('    - Streaming Timeout Exceeded');
+          resObj.statusLink = '🟨'; // Mark status as timeout
           stream.end(); // End the stream if timeout is reached
           console.log('    - SSH Stream Closed');
           conn.end(); // Close the SSH connection
@@ -136,26 +137,40 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
           // Handle Paginations
           if (dataStr.includes('--More--') && !finished) {
-            indexPagination++;
             result += '\n';
 
-            if (datek.doublePagination) {
-              if (indexPagination === 2) {
-                resObj.interfaces[indexLink].resultString = linkResult;
-                linkResult = '';
-                commandExec = false;
-                indexLink++;
-                indexPagination = 0;
-              }
-            } else {
+            if (indexPagination === 0) {
               resObj.interfaces[indexLink].resultString = linkResult;
+              console.log(`    - Save Result String for ${resObj.interfaces[indexLink].portName}`);
+            } else {
               linkResult = '';
-              commandExec = false;
-              indexLink++;
             }
 
+            indexPagination++;
             console.log('    - Pagination Detected: Sending Space');
             stream.write(' ');
+          }
+
+          // Move To Next Interface
+          if (
+            dataStr.includes(`Output bandwidth utilization :`) &&
+            dataStr.includes(`${datek.hostname_ne}#`) &&
+            commandExec
+          ) {
+            console.log('    - Move to next interface');
+            linkResult = '';
+            indexPagination = 0;
+            indexLink++;
+
+            if (indexLink < resObj.interfaces.length) {
+              currentCommand = `show interface ${resObj.interfaces[indexLink].portName}`;
+              stream.write(`${currentCommand}\n`);
+              console.log(`    - Executing Command: ${currentCommand}`);
+            }
+
+            if (indexLink === resObj.interfaces.length) {
+              finished = true;
+            }
           }
 
           // HANDLE FINISHING
@@ -179,6 +194,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
     // ON ERROR
     conn.on('error', (err) => {
+      console.log(err);
       clearTimeout(timeoutHandle); // Clear the timeout on error
       console.log('    - SSH Connection Error (SSH Failed)');
       resolve();
