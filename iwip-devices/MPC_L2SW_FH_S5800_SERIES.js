@@ -136,7 +136,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
           }
 
           // Handle Paginations
-          if (dataStr.includes('--More--') && !finished) {
+          if (dataStr.includes('--More--')) {
             result += '\n';
 
             if (indexPagination === 0) {
@@ -153,9 +153,10 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
           // Move To Next Interface
           if (
-            dataStr.includes(`Output bandwidth utilization :`) &&
             dataStr.includes(`${datek.hostname_ne}#`) &&
-            commandExec
+            commandExec &&
+            indexLink < resObj.interfaces.length &&
+            resObj.interfaces[indexLink].resultString !== '#'
           ) {
             console.log('    - Move to next interface');
             linkResult = '';
@@ -166,10 +167,6 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
               currentCommand = `show interface ${resObj.interfaces[indexLink].portName}`;
               stream.write(`${currentCommand}\n`);
               console.log(`    - Executing Command: ${currentCommand}`);
-            }
-
-            if (indexLink === resObj.interfaces.length) {
-              finished = true;
             }
           }
 

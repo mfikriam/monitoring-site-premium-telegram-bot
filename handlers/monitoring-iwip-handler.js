@@ -43,39 +43,28 @@ async function deviceHandler(defaultConfig, datek, resObj) {
   }
 }
 
-async function monitoringPremiumHandler(msg, defaultConfig) {
-  // Get Dateks
-  const dateks = await excelHandler('datek-cluster-iwip.xlsx');
-
-  // Initial Message
-  msg += `<b>REPORT MONITORING CLUSTER IWIP</b>\n`;
-  msg += `${currentDateTime()}\n`;
-  msg += `\n`;
-
-  // Declare variables
-  let routes = [];
-  let interfacesNE = [];
-  let losInterfaces = [];
-  const unmonitDevices = [];
-
-  // ----------------------------- 1. Ring Metro-E via DWDM -----------------------------
-
+async function ringMetroDWDM(msg, dateks, defaultConfig, unmonitDevices) {
   // Print title
   console.log(`[Ring Metro-E via DWDM]\n`);
 
   // Define routes for Metro-E via DWDM
-  routes = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
+  const routes = ['SFI', 'WDA', 'IWP', 'MBA', 'SFI'];
 
   // Define Interfaces NE for Metro-E via DWDM
-  interfacesNE = [
+  const interfacesNE = [
     { src: 'SFI', dest: 'WDA', group_interface: 'Eth-Trunk25', ne: 'SPC_METRO' },
     { src: 'WDA', dest: 'IWP', group_interface: 'Eth-Trunk11', ne: 'SPC_METRO' },
     { src: 'IWP', dest: 'MBA', group_interface: 'Eth-Trunk25', ne: 'SPC_METRO' },
     { src: 'MBA', dest: 'SFI', group_interface: 'Eth-Trunk23', ne: 'SPC_METRO' },
   ];
 
+  // Define LOS Interfaces Array
+  const losInterfaces = [];
+
   // Add title to message
   msg += `<b>1. Ring Metro-E via DWDM</b>\n`;
+
+  // Add First Route to Message
   msg += `${routes[0]}`;
 
   // Loop through routes and update datek objects
@@ -128,20 +117,18 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Add new line
   msg += `\n`;
 
-  // --------------------------- End of 1. Ring Metro-E via DWDM ---------------------------
+  return msg;
+}
 
-  // ----------------------------- 2. Ring Metro-E via Radio IP -----------------------------
-
+async function ringMetroRIP(msg, dateks, defaultConfig, unmonitDevices) {
   // Print title
-  console.log();
-  console.log(`[Ring Metro-E via Radio IP]\n`);
+  console.log(`\n[Ring Metro-E via Radio IP]\n`);
 
   // Add title to message
-  msg += `\n`;
-  msg += `<b>2. Ring Metro-E via Radio IP</b>\n`;
+  msg += `\n<b>2. Ring Metro-E via Radio IP</b>\n`;
 
-  // Initialized LOS interfaces
-  losInterfaces = [];
+  // Define LOS Interfaces Array
+  const losInterfaces = [];
 
   // Get datek for WDA
   const datek = dateks.find((data) => data.id === 'WDA');
@@ -190,16 +177,15 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   // Add new line
   msg += `\n`;
 
-  // -------------------------- End of 2. Ring Metro-E via Radio IP --------------------------
+  return msg;
+}
 
-  // ------------------------------------- 3. Ring L2SW -------------------------------------
-
+async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices) {
   // Print title
-  console.log();
-  console.log(`[Ring L2SW]\n`);
+  console.log(`\n[Ring L2SW]\n`);
 
   // Define routes for L2SW
-  routes = [
+  const routes = [
     'WDA',
     'SSU020',
     'IWP',
@@ -217,7 +203,7 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   ];
 
   // Define Interfaces NE for L2SW
-  interfacesNE = [
+  const interfacesNE = [
     { src: 'WDA', dest: 'SSU020', group_interface: 'Eth-Trunk5', ne: 'SPC_METRO' },
     { src: 'SSU020', dest: 'IWP', group_interface: 'eth-trunk 2', ne: 'SPC_L2SW_FH_S5800v1' },
     { src: 'IWP', dest: 'SSU005', group_interface: 'Eth-Trunk10', ne: 'SPC_METRO' },
@@ -258,13 +244,14 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     },
   ];
 
-  // Add title to message
-  msg += `\n`;
-  msg += `<b>3. Ring L2SW</b>\n`;
-  msg += `${routes[0]}`;
+  // Define LOS Interfaces Array
+  const losInterfaces = [];
 
-  // Initialized LOS interfaces
-  losInterfaces = [];
+  // Add title to message
+  msg += `\n<b>3. Ring L2SW</b>\n`;
+
+  // Add First Route to Message
+  msg += `${routes[0]}`;
 
   // Loop through routes and update datek objects
   for (let i = 0; i < routes.length - 1; i++) {
@@ -322,13 +309,31 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     msg += losInterfaces.join('\n');
   }
 
+  return msg;
+}
+
+async function monitoringPremiumHandler(msg, defaultConfig) {
+  // Get Dateks
+  const dateks = await excelHandler('datek-cluster-iwip.xlsx');
+
+  // Initial Message
+  msg += `<b>REPORT MONITORING CLUSTER IWIP</b>\n`;
+  msg += `${currentDateTime()}\n`;
+  msg += `\n`;
+
+  // Declare variables
+  const unmonitDevices = [];
+
+  // Check All The Rings
+  msg = await ringMetroDWDM(msg, dateks, defaultConfig, unmonitDevices);
+  msg = await ringMetroRIP(msg, dateks, defaultConfig, unmonitDevices);
+  msg = await ringL2SW(msg, dateks, defaultConfig, unmonitDevices);
+
   // Add Unmonit Devices to Message
   if (unmonitDevices.length > 0) {
     msg += `\n\n<b>NE Unmonit :</b>\n`;
     msg += [...new Set(unmonitDevices)].join(', '); // Remove duplicates and join the elements
   }
-
-  // ---------------------------------- End of 3. Ring L2SW ----------------------------------
 
   return msg;
 }
