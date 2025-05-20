@@ -31,8 +31,8 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function getStatusLink(site, defaultConfig) {
   // INITIALIZE VARIABLES
   const { ne, link } = site;
-  const nmsConfig = ne === 'METRO' ? { ...defaultConfig.metro.nms } : { ...defaultConfig.gpon.nms };
-  const neConfig = ne === 'METRO' ? { ...defaultConfig.metro.ne } : { ...defaultConfig.gpon.ne };
+  const nmsConfig = ne.includes('METRO') ? { ...defaultConfig.metro.nms } : { ...defaultConfig.gpon.nms };
+  const neConfig = ne.includes('METRO') ? { ...defaultConfig.metro.ne } : { ...defaultConfig.gpon.ne };
 
   // PRINT LINK TITLE
   console.log(`  > ${link}: ${ne}`);

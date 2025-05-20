@@ -8,6 +8,7 @@ import METRO from '../single-port-check-devices/METRO.js';
 import L2SW_FH_S5800_SERIES from '../single-port-check-devices/L2SW_FH_S5800_SERIES.js';
 import L2SW_ZTE_ZXR10 from '../single-port-check-devices/L2SW_ZTE_ZXR10.js';
 import L2SW_RAISECOM from '../single-port-check-devices/L2SW_RAISECOM.js';
+import METRO_GROUP from '../single-port-check-devices/METRO_GROUP.js';
 
 async function singlePcdHandler(deviceParams) {
   // GET SITE
@@ -42,6 +43,9 @@ async function singlePcdHandler(deviceParams) {
 
     case 'L2SW RAISECOM':
       return await L2SW_RAISECOM(deviceParams);
+
+    case 'METRO GROUP':
+      return await METRO_GROUP(deviceParams);
 
     default:
       console.log(`    - Device ${ne} Not Recognized`);
