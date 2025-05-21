@@ -93,11 +93,12 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let currentCommand = '';
         let indexLink = 0;
         let indexPagination = 0;
+        let isTimeOut = false;
 
         // Set a timeout to limit streaming time
         timeoutHandle = setTimeout(() => {
+          isTimeOut = true; // Set time out to true
           console.log('    - Streaming Timeout Exceeded');
-          resObj.statusLink = '🟨'; // Mark status as timeout
           stream.end(); // End the stream if timeout is reached
           console.log('    - SSH Stream Closed');
           conn.end(); // Close the SSH connection
@@ -106,7 +107,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle); // Clear the timeout if stream closes before time limit
-          resultParser(resObj); // Parse the result when the stream closes
+          if (!isTimeOut) resultParser(resObj); // Parse the result when the stream closes
           resolve();
         });
 

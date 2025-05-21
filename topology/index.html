@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Network Topology with Images</title>
+    <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        margin: 20px;
+      }
+      #cy {
+        width: 800px;
+        height: 600px;
+        margin: auto;
+        border: 1px solid #ccc;
+      }
+      button {
+        margin-bottom: 20px;
+        padding: 10px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <button onclick="exportImage()">Export as PNG</button>
+    <div id="cy"></div>
+
+    <script>
+      const cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: [
+          // Nodes
+          { data: { id: 'SFI', label: 'SFI', type: 'router' }, position: { x: 0, y: 0 } },
+          { data: { id: 'WDA', label: 'WDA', type: 'router' }, position: { x: 0, y: -150 } },
+          { data: { id: 'IWP', label: 'IWP', type: 'router' }, position: { x: 450, y: -150 } },
+          { data: { id: 'MBA', label: 'MBA', type: 'router' }, position: { x: 450, y: 0 } },
+          { data: { id: 'SSU020', label: 'SSU020', type: 'switch' }, position: { x: 225, y: -225 } },
+          { data: { id: 'SSU005', label: 'SSU005', type: 'switch' }, position: { x: 600, y: -150 } },
+          { data: { id: 'SSU043', label: 'SSU043', type: 'switch' }, position: { x: 750, y: -150 } },
+          { data: { id: 'OLD-SSU007', label: 'OLD-SSU007', type: 'switch' }, position: { x: 900, y: -150 } },
+          { data: { id: 'NEW-SSU007', label: 'NEW-SSU007', type: 'switch' }, position: { x: 900, y: 0 } },
+          { data: { id: 'SSU015', label: 'SSU015', type: 'switch' }, position: { x: 750, y: 0 } },
+          { data: { id: 'MBA012', label: 'MBA012', type: 'switch' }, position: { x: 600, y: 0 } },
+          { data: { id: 'SBM', label: 'SBM', type: 'switch' }, position: { x: 125, y: 0 } },
+          { data: { id: 'BUL', label: 'BUL', type: 'switch' }, position: { x: 325, y: 50 } },
+
+          // DWDM Edges
+          {
+            data: {
+              source: 'SFI',
+              target: 'WDA',
+              label: '60/70 ⚠️ DWDM',
+              type: 'warning',
+              distances: [0],
+              weights: [0.5],
+            },
+          },
+          {
+            data: {
+              source: 'WDA',
+              target: 'IWP',
+              label: '70/70 ✅ DWDM',
+              type: 'working',
+              distances: [-10],
+              weights: [0.5],
+            },
+          },
+          {
+            data: {
+              source: 'IWP',
+              target: 'MBA',
+              label: '70/70 ✅ DWDM',
+              type: 'working',
+              distances: [0],
+              weights: [0.5],
+            },
+          },
+          {
+            data: {
+              source: 'MBA',
+              target: 'SFI',
+              label: '70/70 ✅ DWDM',
+              type: 'working',
+              distances: [50],
+              weights: [0.5],
+            },
+          },
+
+          // Radio IP Edges
+          {
+            data: {
+              source: 'WDA',
+              target: 'IWP',
+              label: '#/# 🟨 RADIO',
+              type: '',
+              distances: [10],
+              weights: [0.5],
+            },
+          },
+
+          // L2SW Edges
+          {
+            data: { source: 'WDA', target: 'SSU020', label: '#/# 🟨', type: '', distances: [0], weights: [0.5] },
+          },
+          {
+            data: { source: 'SSU020', target: 'IWP', label: '#/# 🟨', type: '', distances: [0], weights: [0.5] },
+          },
+          {
+            data: { source: 'IWP', target: 'SSU005', label: '#/# 🟨', type: '', distances: [0], weights: [0.5] },
+          },
+          {
+            data: {
+              source: 'SSU005',
+              target: 'SSU043',
+              label: '#/# 🟨',
+              type: '',
+              distances: [0],
+              weights: [0.5],
+            },
+          },
+          {
+            data: {
+              source: 'SSU043',
+              target: 'OLD-SSU007',
+              label: '#/# 🟨',
+              type: '',
+              distances: [0],
+              weights: [0.5],
+            },
+          },
+          {
+            data: {
+              source: 'OLD-SSU007',
+              target: 'NEW-SSU007',
+              label: '#/# 🟨',
+              type: '',
+              distances: [0],
+              weights: [0.5],
+            },
+          },
+          {
+            data: {
+              source: 'NEW-SSU007',
+              target: 'SSU015',
+              label: '#/# 🟨',
+              type: '',
+              distances: [0],
+              weights: [0.5],
+            },
+          },
+          {
+            data: {
+              source: 'SSU015',
+              target: 'MBA012',
+              label: '#/# 🟨',
+              type: '',
+              distances: [0],
+              weights: [0.5],
+            },
+          },
+          {
+            data: { source: 'MBA012', target: 'MBA', label: '#/# 🟨', type: '', distances: [0], weights: [0.5] },
+          },
+          { data: { source: 'MBA', target: 'BUL', label: '#/# 🟨', type: '', distances: [0], weights: [0.5] } },
+          {
+            data: { source: 'BUL', target: 'SFI', label: '#/# 🟨', type: '', distances: [-30], weights: [0.6] },
+          },
+          { data: { source: 'SFI', target: 'SBM', label: '#/# 🟨', type: '', distances: [0], weights: [0.5] } },
+          { data: { source: 'SBM', target: 'MBA', label: '#/# 🟨', type: '', distances: [0], weights: [0.5] } },
+        ],
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': 'transparent',
+              'background-opacity': 0,
+              'border-color': '#0074D9',
+              'border-width': 0,
+              shape: 'rectangle',
+              label: 'data(label)',
+              'text-valign': 'bottom',
+              'text-halign': 'center',
+              'font-size': '10px',
+              width: '60px',
+              height: '60px',
+              'background-fit': 'contain',
+              'text-margin-y': '-5px',
+            },
+          },
+          {
+            selector: 'node[type="router"]',
+            style: {
+              'background-image': 'assets/router.png',
+            },
+          },
+          {
+            selector: 'node[type="switch"]',
+            style: {
+              'background-image': 'assets/workgroup-switch.png',
+            },
+          },
+          {
+            selector: 'node[type="router-unmonit"]',
+            style: {
+              'background-image': 'assets/router-black.png',
+            },
+          },
+          {
+            selector: 'node[type="switch-unmonit"]',
+            style: {
+              'background-image': 'assets/workgroup-switch-black.png',
+            },
+          },
+          {
+            selector: 'edge',
+            style: {
+              label: 'data(label)',
+              color: '#000',
+              'font-size': '8px',
+              'text-wrap': 'wrap',
+              'text-max-width': 100,
+              'text-background-color': '#fff',
+              'text-background-opacity': 1,
+              'text-background-padding': '2px',
+              width: 2,
+              'curve-style': 'segments',
+              'segment-distances': 'data(distances)',
+              'segment-weights': 'data(weights)',
+            },
+          },
+          {
+            selector: 'edge[type="working"]',
+            style: {
+              'line-color': '#2ecc40',
+            },
+          },
+          {
+            selector: 'edge[type="los"]',
+            style: {
+              'line-color': '#ff4136',
+            },
+          },
+          {
+            selector: 'edge[type="warning"]',
+            style: {
+              'line-color': '#ff851b',
+            },
+          },
+        ],
+
+        layout: {
+          name: 'preset',
+        },
+      });
+
+      function exportImage() {
+        const png = cy.png({ full: true, bg: 'white', scale: 2 });
+        const link = document.createElement('a');
+        link.href = png;
+        link.download = 'network-topology.png';
+        link.click();
+      }
+    </script>
+  </body>
+</html>
