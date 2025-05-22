@@ -14,7 +14,11 @@ export async function generateTopologyImage({ elements, output = 'topology/topol
     <html><head>
       <meta charset="UTF-8">
       <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
-      <style>body, html { margin:0; } #cy { width:800px; height:600px; }</style>
+      <style>
+        body, html { margin:0; } 
+        body { font-family: 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif; } 
+        #cy { width:800px; height:600px; }
+      </style>
     </head><body><div id="cy"></div>
     <script>
       const cy = cytoscape({
@@ -104,10 +108,13 @@ export async function generateTopologyImage({ elements, output = 'topology/topol
     </body></html>
   `;
 
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+
   const page = await browser.newPage();
   await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-
   await page.waitForFunction(() => window.cy && window.cy.png);
 
   const png = await page.evaluate(() => window.cy.png({ full: true, bg: 'white', scale: 2 }));
