@@ -1,5 +1,8 @@
 import { Client as SSHClient } from 'ssh2';
 
+// Import Utils
+import getWarningStatus from '../utils/get-warning-status.js';
+
 function resultParser(resultStr, resObj) {
   // Parsing Max BW & Current BW
   const portBWMatch = resultStr.match(/Cur-BW\(M\):\s*(\d+)/);
@@ -29,7 +32,10 @@ function resultParser(resultStr, resObj) {
   }
 
   // If no matches were found
-  if (portEntries.length === 0) statusLink = '🟨';
+  if (portEntries.length === 0) statusLink = '⬛';
+
+  // Check warning status
+  statusLink = getWarningStatus(statusLink, currentBW, maxBW);
 
   // Print status link
   console.log(`    - Status Link: ${currentBW}/${maxBW} ${statusLink}`);

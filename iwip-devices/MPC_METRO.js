@@ -1,5 +1,8 @@
 import { Client as SSHClient } from 'ssh2';
 
+// Import Utils
+import getWarningStatus from '../utils/get-warning-status.js';
+
 function resultsParser(resObj) {
   // Initialized Num Interfaces
   resObj.numUpInterfaces = 0;
@@ -34,6 +37,9 @@ function resultsParser(resObj) {
       `    - Status Interface ${intf.portName}: ${intf.portStatus} ${intf.portStatus === 'UP' ? '✅' : '❌'}`,
     );
   }
+
+  // Check warning status
+  resObj.statusLink = getWarningStatus(resObj.statusLink, resObj.numUpInterfaces, resObj.numInterfaces);
 
   // Print status link
   console.log(`    - Status Link: ${resObj.statusLink}`);

@@ -55,8 +55,8 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
   const imageBuffer = await generateTopologyImage({ elements, returnBuffer: true });
   console.log(`Buffer Created:`);
   console.log(imageBuffer);
-
   if (Buffer.isBuffer(imageBuffer) && imageBuffer.length > 0) return { imageBuffer, caption: msg };
+
   return msg;
 }
 

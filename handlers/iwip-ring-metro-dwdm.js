@@ -1,6 +1,9 @@
 // Import Handlers
 import deviceHandler from './iwip-devices-handler.js';
 
+// Import Utils
+import getEdgeType from '../utils/get-edge-type.js';
+
 async function ringMetroDWDM(msg, dateks, defaultConfig, unmonitDevices, edges) {
   // Print title
   console.log(`[Ring Metro-E via DWDM]\n`);
@@ -45,14 +48,14 @@ async function ringMetroDWDM(msg, dateks, defaultConfig, unmonitDevices, edges) 
     datek.group_interface = interfacesNE.find((route) => route.src === src && route.dest === dest).group_interface;
 
     // Initialize result object
-    const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
+    const resObj = { currentBW: '#', maxBW: '#', statusLink: '⬛', interfaces: [] };
 
     // Call deviceHandler
     datek.ne = 'SPC_METRO';
     await deviceHandler(defaultConfig, datek, resObj);
 
-    // Check if any interfaces is down
-    if (resObj.statusLink === '❌') {
+    if (resObj.statusLink === '❌' || resObj.statusLink === '⚠️') {
+      // Check if any interfaces is down
       resObj.interfaces.forEach((data) => {
         if (data.portStatus !== 'UP')
           losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
@@ -60,7 +63,7 @@ async function ringMetroDWDM(msg, dateks, defaultConfig, unmonitDevices, edges) 
     }
 
     // Check if device is unmonit
-    if (resObj.statusLink === '🟨') unmonitDevices.push(datek.hostname_ne);
+    if (resObj.statusLink === '⬛') unmonitDevices.push(datek.hostname_ne);
 
     // Add result object to message
     msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
@@ -69,7 +72,7 @@ async function ringMetroDWDM(msg, dateks, defaultConfig, unmonitDevices, edges) 
     const targetEdge = edges.find((edge) => edge.data.source === src && edge.data.target === dest);
     if (targetEdge) {
       targetEdge.data.label = `${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink} DWDM`;
-      targetEdge.data.type = resObj.statusLink === '✅' ? 'working' : 'los';
+      targetEdge.data.type = getEdgeType(resObj.statusLink);
     }
   }
 

@@ -1,5 +1,8 @@
 import { Client as SSHClient } from 'ssh2';
 
+// Import Utils
+import getWarningStatus from '../utils/get-warning-status.js';
+
 function resultParser(resObj) {
   // Initialized Current BW & Max Bw
   resObj.currentBW = 0;
@@ -38,6 +41,9 @@ function resultParser(resObj) {
       `    - Status Interface ${intf.portName}: ${intf.portStatus} ${intf.portStatus === 'Up' ? '✅' : '❌'}`,
     );
   }
+
+  // Check warning status
+  resObj.statusLink = getWarningStatus(resObj.statusLink, resObj.currentBW, resObj.maxBW);
 
   // Print status link
   console.log(`    - Status Link: ${resObj.statusLink}`);

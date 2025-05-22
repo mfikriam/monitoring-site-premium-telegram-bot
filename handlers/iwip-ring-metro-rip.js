@@ -1,6 +1,9 @@
 // Import Handlers
 import deviceHandler from './iwip-devices-handler.js';
 
+// Import Utils
+import getEdgeType from '../utils/get-edge-type.js';
+
 async function ringMetroRIP(msg, dateks, defaultConfig, unmonitDevices, edges) {
   // Print title
   console.log(`\n[Ring Metro-E via Radio IP]\n`);
@@ -28,7 +31,7 @@ async function ringMetroRIP(msg, dateks, defaultConfig, unmonitDevices, edges) {
   const resObj = {
     numUpInterfaces: '#',
     numInterfaces: '#',
-    statusLink: '🟨',
+    statusLink: '⬛',
     interfaces: datek.interfaces_ne.map((intf) => ({ portName: intf, portStatus: '#', resultString: '#' })),
   };
 
@@ -39,10 +42,10 @@ async function ringMetroRIP(msg, dateks, defaultConfig, unmonitDevices, edges) {
   msg += `WDA &lt;${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink}&gt; IWP`;
 
   // Check if device is unmonit
-  if (resObj.statusLink === '🟨') unmonitDevices.push(datek.hostname_ne);
+  if (resObj.statusLink === '⬛') unmonitDevices.push(datek.hostname_ne);
 
   // Check if any interfaces is down
-  if (resObj.statusLink === '❌') {
+  if (resObj.statusLink === '❌' || resObj.statusLink === '⚠️') {
     resObj.interfaces.forEach((data) => {
       if (data.portStatus !== 'UP')
         losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
@@ -53,7 +56,7 @@ async function ringMetroRIP(msg, dateks, defaultConfig, unmonitDevices, edges) {
   const targetEdge = edges.find((edge) => edge.data.source === 'WDA' && edge.data.target === 'IWP');
   if (targetEdge) {
     targetEdge.data.label = `${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink} RADIO`;
-    targetEdge.data.type = resObj.statusLink === '✅' ? 'working' : 'los';
+    targetEdge.data.type = getEdgeType(resObj.statusLink);
   }
 
   // Add LOS interfaces to message

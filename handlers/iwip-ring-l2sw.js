@@ -1,6 +1,9 @@
 // Import Handlers
 import deviceHandler from './iwip-devices-handler.js';
 
+// Import Utils
+import getEdgeType from '../utils/get-edge-type.js';
+
 async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices, edges) {
   // Print title
   console.log(`\n[Ring L2SW]\n`);
@@ -91,7 +94,7 @@ async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices, edges) {
     datek.ne = interfacesNE.find((route) => route.src === src && route.dest === dest).ne;
 
     // Initialize result object
-    const resObj = { currentBW: '#', maxBW: '#', statusLink: '🟨', interfaces: [] };
+    const resObj = { currentBW: '#', maxBW: '#', statusLink: '⬛', interfaces: [] };
 
     // Check if SPC or MPC
     if (datek.ne.includes('SPC')) {
@@ -109,7 +112,7 @@ async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices, edges) {
     await deviceHandler(defaultConfig, datek, resObj);
 
     // Check if any interfaces is down
-    if (resObj.statusLink === '❌') {
+    if (resObj.statusLink === '❌' || resObj.statusLink === '⚠️') {
       resObj.interfaces.forEach((data) => {
         if (data.portStatus !== 'UP' && data.portStatus !== 'Up') {
           losInterfaces.push(`- ${datek.hostname_ne} ${data.portName} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
@@ -118,7 +121,7 @@ async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices, edges) {
     }
 
     // Check if device is unmonit
-    if (resObj.statusLink === '🟨') unmonitDevices.push(datek.hostname_ne);
+    if (resObj.statusLink === '⬛') unmonitDevices.push(datek.hostname_ne);
 
     // Add result object to message
     msg += ` &lt;${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}&gt; ${dest}`;
@@ -127,7 +130,7 @@ async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices, edges) {
     const targetEdge = edges.find((edge) => edge.data.source === src && edge.data.target === dest);
     if (targetEdge) {
       targetEdge.data.label = `${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`;
-      targetEdge.data.type = resObj.statusLink === '✅' ? 'working' : 'los';
+      targetEdge.data.type = getEdgeType(resObj.statusLink);
     }
   }
 
