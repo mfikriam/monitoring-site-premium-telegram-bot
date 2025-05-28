@@ -11,7 +11,7 @@ function parser(resultStr, site) {
   return '❌';
 }
 
-async function L2SW({ nmsConfig, neConfig, site, timeout = 15000 }) {
+async function L2SW({ nmsConfig, neConfig, site, timeout = 60000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();

@@ -16,7 +16,7 @@ function linksParser(resultString, linksObj) {
   }
 }
 
-async function SMETRO({ nmsConfig, neConfig, site, linksObj, timeout = 15000 }) {
+async function SMETRO({ nmsConfig, neConfig, site, linksObj, timeout = 60000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();

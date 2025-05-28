@@ -11,7 +11,7 @@ function parser(resultStr, site) {
   return pattern.test(resultStr) ? '✅' : '❌';
 }
 
-async function METRO({ nmsConfig, neConfig, site, timeout = 15000 }) {
+async function METRO({ nmsConfig, neConfig, site, timeout = 60000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();
