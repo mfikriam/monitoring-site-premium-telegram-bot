@@ -93,12 +93,20 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     for (let i = 0; i < 3; i++) {
       statusLink1 = await getStatusLink(link1, defaultConfig);
       descLink1 = getStatusDesc(statusLink1);
-      if (descLink1 !== 'SSH Failed') break;
+      if (statusLink1 !== '🟨') break;
 
       console.log(`    - Repeat SSH Connection (Attempt ${i + 2})`);
       const delayTime = (i + 1) * 3000;
       console.log(`    - Delaying ${delayTime / 1000} seconds...`);
       await delay(delayTime);
+    }
+
+    // Recheck Status Link 1
+    if (statusLink1 === '❌') {
+      console.log(`    - Recheck Status Link 2 + Delay 3 Seconds`);
+      await delay(3000);
+      statusLink1 = await getStatusLink(link1, defaultConfig);
+      descLink1 = getStatusDesc(statusLink1);
     }
 
     // GET STATUS LINK 2
@@ -108,12 +116,20 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     for (let i = 0; i < 3; i++) {
       statusLink2 = await getStatusLink(link2, defaultConfig);
       descLink2 = getStatusDesc(statusLink2);
-      if (descLink2 !== 'SSH Failed') break;
+      if (statusLink2 !== '🟨') break;
 
       console.log(`    - Repeat SSH Connection (Attempt ${i + 2})`);
       const delayTime = (i + 1) * 3000;
       console.log(`    - Delaying ${delayTime / 1000} seconds...`);
       await delay(delayTime);
+    }
+
+    // Recheck Status Link 2
+    if (statusLink2 === '❌') {
+      console.log(`    - Recheck Status Link 2 + Delay 3 Seconds`);
+      await delay(3000);
+      statusLink2 = await getStatusLink(link2, defaultConfig);
+      descLink2 = getStatusDesc(statusLink2);
     }
 
     // UPDATE COUNTER
