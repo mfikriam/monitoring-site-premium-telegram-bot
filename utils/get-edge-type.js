@@ -8,6 +8,8 @@ function getEdgeType(statusLink) {
       return 'warning';
     case '⬛':
       return '';
+    case '🟨':
+      return '';
   }
 
   return '';

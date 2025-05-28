@@ -69,11 +69,26 @@ export async function generateTopologyImage({ elements, output = 'topology/topol
             },
           },
           {
+            selector: 'node[id="IWP"]',
+            style: {
+              'font-weight': 'bold',
+            },
+          },
+          {
+            selector: 'node[size="small"]',
+            style: {
+              'font-size': '9px',
+              width: '50px',
+              height: '50px',
+            },
+          },
+          {
             selector: 'edge',
             style: {
               label: 'data(label)',
               color: '#000',
               'font-size': '9px',
+              'font-weight': 'bold',
               'text-background-color': '#fff',
               'text-background-opacity': 1,
               'text-background-padding': '2px',
@@ -87,6 +102,7 @@ export async function generateTopologyImage({ elements, output = 'topology/topol
             selector: 'edge[type="working"]',
             style: {
               'line-color': '#2ecc40',
+              'font-weight': 'normal',
             },
           },
           {
