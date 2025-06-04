@@ -92,7 +92,7 @@ async function SMETRO({ nmsConfig, neConfig, site, linksObj, timeout = 60000 }) 
           }
 
           // HANDLE NE AUTH FAILED
-          if (dataStr.includes('Permission denied')) {
+          if (dataStr.includes('Permission denied, please try again.')) {
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
