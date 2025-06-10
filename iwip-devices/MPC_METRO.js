@@ -77,6 +77,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let currentCommand = '';
         let indexLink = 0;
         let isTimeOut = false;
+        let authFailed = false;
 
         // Set a timeout to limit streaming time
         timeoutHandle = setTimeout(() => {
@@ -90,8 +91,11 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle); // Clear the timeout if stream closes before time limit
+          if (authFailed) {
+            resolve();
+            return;
+          }
           if (!isTimeOut) resultsParser(resObj);
-          console.log('    - SSH Stream Closed');
           resolve();
         });
 
@@ -126,6 +130,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
           // HANDLE NE AUTH FAILED
           if (dataStr.includes('Received disconnect from')) {
+            authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
           }

@@ -82,6 +82,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let indexLink = 0;
         let indexPagination = 0;
         let isTimeOut = false;
+        let authFailed = false;
 
         // Set a timeout to limit streaming time
         timeoutHandle = setTimeout(() => {
@@ -95,6 +96,10 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle); // Clear the timeout if stream closes before time limit
+          if (authFailed) {
+            resolve();
+            return;
+          }
           if (!isTimeOut) resultParser(resObj); // Parse the result when the stream closes
           resolve();
         });
@@ -130,6 +135,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
           // HANDLE NE AUTH FAILED
           if (dataStr.includes('%No such user or bad password.')) {
+            authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
