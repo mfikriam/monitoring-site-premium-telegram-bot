@@ -109,6 +109,14 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
       descLink1 = getStatusDesc(statusLink1);
     }
 
+    // Recheck Status Link 1 ADL007
+    if (statusLink1 === '❌' && link1.site_id === 'ADL007') {
+      console.log(`    - Recheck Status Link 2 + Delay 3 Seconds`);
+      await delay(3000);
+      statusLink1 = await getStatusLink(link1, defaultConfig);
+      descLink1 = getStatusDesc(statusLink1);
+    }
+
     // GET STATUS LINK 2
     let statusLink2, descLink2;
     statusLink2 = '✅';
@@ -126,6 +134,14 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
 
     // Recheck Status Link 2
     if (statusLink2 === '❌') {
+      console.log(`    - Recheck Status Link 2 + Delay 3 Seconds`);
+      await delay(3000);
+      statusLink2 = await getStatusLink(link2, defaultConfig);
+      descLink2 = getStatusDesc(statusLink2);
+    }
+
+    // Recheck Status Link 2 ADL007
+    if (statusLink2 === '❌' && link2.site_id === 'ADL007') {
       console.log(`    - Recheck Status Link 2 + Delay 3 Seconds`);
       await delay(3000);
       statusLink2 = await getStatusLink(link2, defaultConfig);
