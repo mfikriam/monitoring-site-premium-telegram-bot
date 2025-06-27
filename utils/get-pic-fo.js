@@ -1,6 +1,6 @@
 function getPICFO(witels) {
   const picFO = {
-    SULSEL: '@jodryjft @BOSSNYA_PENGUSAHA @jeffrianto87 @ommaros',
+    SULSEL: '@jodryjft @‌AsdiRamli @jeffrianto87 @taufik_syam',
     'SULSEL BARAT': '@anthyarifin @SUTRYSNO_HADISAPUTRA @Lannyadelin',
     SULTRA: '@hermanbatari @President_Mr @rizaldy_pahlevi @Adityaerawann',
     SULTENG: '@flow_like_river @Cloverdifferents @indralaopa',
