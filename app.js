@@ -27,7 +27,7 @@ async function run() {
     console.log(`Site: ${args.site || 'default'}, Server: ${args.server || 'default'}\n`);
 
     // DEFINE DEFAULT PASSWORD
-    const defaultPassword = 'Junea2002';
+    const defaultPassword = process.env.DEFAULT_PASSWORD || 'Julea2002';
 
     // DEFINE DEFAULT CONFIG
     const defaultConfig = {
