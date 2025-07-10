@@ -25,7 +25,7 @@ async function ringMetroRIP(msg, dateks, defaultConfig, unmonitDevices, edges) {
   datek.interfaces_ne = ['Eth-Trunk1.10', 'Eth-Trunk1.11', 'Eth-Trunk1.12', 'Eth-Trunk1.13'];
 
   // Set Datek NE
-  datek.ne = 'MPC_METRO';
+  datek.ne = 'MPC_RIP_METRO';
 
   // Initialize result object
   const resObj = {

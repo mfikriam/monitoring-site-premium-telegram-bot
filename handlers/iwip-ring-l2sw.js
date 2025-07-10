@@ -13,7 +13,6 @@ async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices, edges) {
     'WDA',
     'SSU020',
     'IWP',
-    'SSU005',
     'SSU043',
     'OLD-SSU007',
     'NEW-SSU007',
@@ -30,8 +29,7 @@ async function ringL2SW(msg, dateks, defaultConfig, unmonitDevices, edges) {
   const interfacesNE = [
     { src: 'WDA', dest: 'SSU020', group_interface: 'Eth-Trunk5', ne: 'SPC_METRO' },
     { src: 'SSU020', dest: 'IWP', group_interface: 'eth-trunk 2', ne: 'SPC_L2SW_FH_S5800v1' },
-    { src: 'IWP', dest: 'SSU005', group_interface: 'Eth-Trunk10', ne: 'SPC_METRO' },
-    { src: 'SSU005', dest: 'SSU043', interfaces_ne: ['10gigaethernet 1/0/16'], ne: 'MPC_L2SW_FH_S5800_SERIES' },
+    { src: 'IWP', dest: 'SSU043', interfaces_ne: ['GigabitEthernet1/1/4'], ne: 'MPC_METRO' },
     { src: 'SSU043', dest: 'OLD-SSU007', interfaces_ne: ['xgigaethernet 1/1/1'], ne: 'MPC_L2SW_FH_S5800_SERIES' },
     { src: 'OLD-SSU007', dest: 'NEW-SSU007', interfaces_ne: ['gigaethernet 1/0/1'], ne: 'MPC_L2SW_FH_S5800_SERIES' },
     {

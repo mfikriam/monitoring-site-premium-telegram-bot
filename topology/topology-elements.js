@@ -8,10 +8,6 @@ export const nodes = [
     position: { x: 350, y: 50 },
   },
   {
-    data: { id: 'SSU005', label: 'SSU005', type: 'switch', hostname: 'SW-D7-SFI-SSU005-NEW' },
-    position: { x: 650, y: 100 },
-  },
-  {
     data: { id: 'SSU043', label: 'SSU043', type: 'switch', hostname: 'SW-D7-SFI-SSU043' },
     position: { x: 800, y: 100 },
   },
@@ -119,17 +115,7 @@ export const edgesL2SW = [
     },
   },
   {
-    data: { source: 'IWP', target: 'SSU005', label: '#/# ⬛', type: '', distances: [0], weights: [0.5] },
-  },
-  {
-    data: {
-      source: 'SSU005',
-      target: 'SSU043',
-      label: '#/# ⬛',
-      type: '',
-      distances: [0],
-      weights: [0.5],
-    },
+    data: { source: 'IWP', target: 'SSU043', label: '#/# ⬛', type: '', distances: [0], weights: [0.5] },
   },
   {
     data: {

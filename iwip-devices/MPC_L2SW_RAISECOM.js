@@ -41,7 +41,7 @@ function resultParser(resObj) {
   resObj.statusLink = getWarningStatus(resObj.statusLink, resObj.currentBW, resObj.maxBW);
 
   // Print status link
-  console.log(`    - Status Link: ${resObj.statusLink}`);
+  console.log(`    - Status Link: ${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`);
 }
 
 async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {

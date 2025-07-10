@@ -1,6 +1,7 @@
 // Import Devices
 import SPC_METRO from '../iwip-devices/SPC_METRO.js';
 import MPC_METRO from '../iwip-devices/MPC_METRO.js';
+import MPC_RIP_METRO from '../iwip-devices/MPC_RIP_METRO.js';
 import MPC_L2SW_FH_S5800_SERIES from '../iwip-devices/MPC_L2SW_FH_S5800_SERIES.js';
 import SPC_L2SW_FH_S5800v1 from '../iwip-devices/SPC_L2SW_FH_S5800v1.js';
 import SPC_L2SW_FH_S5800v2 from '../iwip-devices/SPC_L2SW_FH_S5800v2.js';
@@ -17,6 +18,9 @@ async function deviceHandler(defaultConfig, datek, resObj) {
     neConfig.password = datek.password_ne;
   }
 
+  // Print Device Name
+  console.log(`  > Device Name : ${datek.ne}`);
+
   const deviceParams = { nmsConfig, neConfig, datek, resObj };
 
   switch (datek.ne) {
@@ -24,6 +28,8 @@ async function deviceHandler(defaultConfig, datek, resObj) {
       return await SPC_METRO(deviceParams);
     case 'MPC_METRO':
       return await MPC_METRO(deviceParams);
+    case 'MPC_RIP_METRO':
+      return await MPC_RIP_METRO(deviceParams);
     case 'SPC_L2SW_FH_S5800v1':
       return await SPC_L2SW_FH_S5800v1(deviceParams);
     case 'SPC_L2SW_FH_S5800v2':
@@ -33,7 +39,7 @@ async function deviceHandler(defaultConfig, datek, resObj) {
     case 'MPC_L2SW_RAISECOM':
       return await MPC_L2SW_RAISECOM(deviceParams);
     default:
-      console.log(`    - Device ${ne} Not Recognized`);
+      console.log(`    - Device ${datek.ne} Not Recognized`);
   }
 }
 

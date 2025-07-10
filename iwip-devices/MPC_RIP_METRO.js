@@ -4,45 +4,45 @@ import { Client as SSHClient } from 'ssh2';
 import getWarningStatus from '../utils/get-warning-status.js';
 
 function resultsParser(resObj) {
-  // Initialized Current BW & Max Bw
-  resObj.currentBW = 0;
-  resObj.maxBW = 0;
+  // Initialized Num Interfaces
+  resObj.numUpInterfaces = 0;
+  resObj.numInterfaces = resObj.interfaces.length;
 
   // Initialize statusLink to UP
   resObj.statusLink = '✅';
 
   for (const intf of resObj.interfaces) {
-    // Get Result String
+    // Get result string
     const resultString = intf.resultString;
 
-    // Define Working/Up Keyword
+    // Update interface status
     const keyword = `${intf.portName} current state : UP`;
-
-    // Update Interface Bandwidth
-    const portBWMatch = resultString.match(/Port BW:\s*(\d+)G/);
-    const maxBWMatch = resultString.match(/max BW:\s*(\d+)G/);
-    resObj.maxBW += maxBWMatch ? parseInt(maxBWMatch[1], 10) : 0;
-
-    // Update Interface Status
     if (resultString && resultString.includes(keyword)) {
+      resObj.numUpInterfaces++;
       intf.portStatus = 'UP';
-      resObj.currentBW += portBWMatch ? parseInt(portBWMatch[1], 10) : 0;
     } else {
       resObj.statusLink = '❌';
       intf.portStatus = 'LOS';
     }
 
-    // Print Status Port
+    // // Test LOS interface
+    // if (intf.portName === 'Eth-Trunk1.12') {
+    //   resObj.numUpInterfaces--;
+    //   resObj.statusLink = '❌';
+    //   intf.portStatus = 'LOS';
+    // }
+
+    // Print status port
     console.log(
       `    - Status Interface ${intf.portName}: ${intf.portStatus} ${intf.portStatus === 'UP' ? '✅' : '❌'}`,
     );
   }
 
-  // Check Warning Status
-  resObj.statusLink = getWarningStatus(resObj.statusLink, resObj.currentBW, resObj.maxBW);
+  // Check warning status
+  resObj.statusLink = getWarningStatus(resObj.statusLink, resObj.numUpInterfaces, resObj.numInterfaces);
 
-  // Print Status Link
-  console.log(`    - Status Link: ${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`);
+  // Print status link
+  console.log(`    - Status Link: ${resObj.numUpInterfaces}/${resObj.numInterfaces} ${resObj.statusLink}`);
 }
 
 async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
