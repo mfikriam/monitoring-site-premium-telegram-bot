@@ -4,14 +4,12 @@ function checkInterfaceStatus(resultString, resObj) {
   // console.log(resultString);
 
   // Update Interface Bandwidth
-  const maxBWMatch = resultString.match(/Speed\s*:\s*(\d+)\s*G/i);
+  const maxBWMatch = resultString.match(/Speed\s*(is|:)\s*(\d+)M\(bps\)/i);
   resObj.currentBW = 0;
-  resObj.maxBW = maxBWMatch ? parseInt(maxBWMatch[1], 10) : 0;
+  resObj.maxBW = maxBWMatch ? parseInt(maxBWMatch[2], 10) / 1000 : 0;
 
   // Update Interface Status
-  const lines = resultString.trim().split('\n');
-  const localInterfaces = lines.map((line) => line.trim().split(/\s+/)[0]);
-  if (localInterfaces.includes(resObj.interfaceAlias)) {
+  if (resultString.includes('Admin state is up,operation state is up')) {
     resObj.currentBW += resObj.maxBW;
     resObj.statusLink = '✅';
   } else {
@@ -99,25 +97,18 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
           }
 
           // HANDLE NE AUTH FAILED
-          if (dataStr.includes('No username or bad password!') && loggedin) {
+          if (dataStr.includes('No such user or bad password.') && loggedin) {
             authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
 
-          // Run LLDP Command
-          if (dataStr.includes(`${datek.hostname_ne}>`) && !commandExec) {
+          // Run Main Command
+          if (dataStr.includes(`${datek.hostname_ne}#`) && !commandExec) {
             commandExec = true;
-            currentCommand = `show lldp general-info port all`;
+            currentCommand = `show interface ${resObj.interface}`;
             console.log(`    - Executing Command: ${currentCommand}`);
             stream.write(`${currentCommand}\n`);
-          }
-
-          // Quit The NMS Server
-          if (commandExec && secondCommand && dataStr.includes(`${datek.hostname_ne}>`) && !finished) {
-            finished = true;
-            console.log(`    - Quit the NMS Server`);
-            stream.write(`quit\n`);
           }
 
           // Handle Pagination
@@ -127,18 +118,16 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
             stream.write(' ');
           }
 
-          // Run Interface Command
+          // Quit The NMS Server
           if (
             commandExec &&
-            result.includes(`Remote LLDP Info:`) &&
-            dataStr.includes(`${datek.hostname_ne}>`) &&
-            !finished &&
-            !secondCommand
+            result.includes(`Other statistic:`) &&
+            dataStr.includes(`${datek.hostname_ne}#`) &&
+            !finished
           ) {
-            secondCommand = true;
-            currentCommand = `show interface ${resObj.interface}`;
-            console.log(`    - Executing Command: ${currentCommand}`);
-            stream.write(`${currentCommand}\n`);
+            finished = true;
+            console.log(`    - Quit the NMS Server`);
+            stream.write(`quit\n`);
           }
 
           // HANDLE CLOSING SSH CONNECTION

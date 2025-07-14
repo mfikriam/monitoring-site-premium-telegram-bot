@@ -3,18 +3,23 @@ import { Client as SSHClient } from 'ssh2';
 function checkInterfaceStatus(resultString, resObj) {
   // console.log(resultString);
 
-  // Split result string into lines
+  // Update Interface Bandwidth
+  const maxBWMatch = resultString.match(/Speed\s*(is|:)\s*(\d+)M\(bps\)/i);
+  resObj.currentBW = 0;
+  resObj.maxBW = maxBWMatch ? parseInt(maxBWMatch[2], 10) / 1000 : 0;
+
+  // Update Interface Status
   const lines = resultString.trim().split('\n');
-
-  // Extract the Local Intf column from each line
   const localInterfaces = lines.map((line) => line.trim().split(/\s+/)[0]);
-
-  // Check if interface exists in the list of local interfaces
-  if (localInterfaces.includes(resObj.interfaceAlias)) resObj.statusLink = '✅';
-  else resObj.statusLink = '❌';
+  if (localInterfaces.includes(resObj.interfaceAlias)) {
+    resObj.currentBW += resObj.maxBW;
+    resObj.statusLink = '✅';
+  } else {
+    resObj.statusLink = '❌';
+  }
 
   // Print Status Link
-  console.log(`    - Status Link: ${resObj.statusLink}`);
+  console.log(`    - Status Link: ${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`);
 }
 
 async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
@@ -44,6 +49,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let finalResult = '';
         let loggedin = false;
         let commandExec = false;
+        let secondCommand = false;
         let finished = false;
         let currentCommand = '';
 
@@ -93,16 +99,13 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
           }
 
           // HANDLE NE AUTH FAILED
-          if (
-            (dataStr.includes('User login failed.') || dataStr.includes('No such user or bad password.')) &&
-            loggedin
-          ) {
+          if (dataStr.includes('No such user or bad password.') && loggedin) {
             authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
 
-          // HANDLE MAIN COMMAND
+          // Run LLDP Command
           if (dataStr.includes(`${datek.hostname_ne}#`) && !commandExec) {
             commandExec = true;
             currentCommand = `show lldp remote`;
@@ -110,14 +113,42 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
             stream.write(`${currentCommand}\n`);
           }
 
-          if (commandExec && dataStr.includes(`${datek.hostname_ne}#`) && !finished) {
+          // Handle Pagination
+          if (dataStr.includes('--More--')) {
+            result += '\n';
+            console.log('    - Pagination Detected: Sending Space');
+            stream.write(' ');
+          }
+
+          // Run Interface Command
+          if (
+            commandExec &&
+            result.includes(`Remote system information:`) &&
+            dataStr.includes(`${datek.hostname_ne}#`) &&
+            !finished &&
+            !secondCommand
+          ) {
+            secondCommand = true;
+            currentCommand = `show interface ${resObj.interface}`;
+            console.log(`    - Executing Command: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
+          }
+
+          // Quit The NMS Server
+          if (
+            commandExec &&
+            secondCommand &&
+            (result.includes(`Other statistic:`) || result.includes(`Output bandwidth utilization :`)) &&
+            dataStr.includes(`${datek.hostname_ne}#`) &&
+            !finished
+          ) {
             finished = true;
             console.log(`    - Quit the NMS Server`);
             stream.write(`quit\n`);
           }
 
           // HANDLE CLOSING SSH CONNECTION
-          if (dataStr.includes('Connection closed by foreign host.')) {
+          if (finished && dataStr.includes('Connection closed by foreign host.')) {
             console.log('    - SSH Stream Closed');
             conn.end();
           }

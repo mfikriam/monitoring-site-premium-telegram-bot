@@ -3,18 +3,23 @@ import { Client as SSHClient } from 'ssh2';
 function checkInterfaceStatus(resultString, resObj) {
   // console.log(resultString);
 
-  // Split result string into lines and ignore the first two lines (headers)
+  // Update Interface Bandwidth
+  const portBWMatch = resultString.match(/Port BW:\s*(\d+)G/);
+  const maxBWMatch = resultString.match(/max BW:\s*(\d+)G/);
+  resObj.maxBW = maxBWMatch ? parseInt(maxBWMatch[1], 10) : 0;
+
+  // Update Interface Status
   const lines = resultString.trim().split('\n').slice(2);
-
-  // Extract the Local Intf column from each line
   const localInterfaces = lines.map((line) => line.trim().split(/\s+/)[0]);
-
-  // Check if resObj.interface exists in the list of local interfaces
-  if (localInterfaces.includes(resObj.interface)) resObj.statusLink = '✅';
-  else resObj.statusLink = '❌';
+  if (localInterfaces.includes(resObj.interface)) {
+    resObj.currentBW = portBWMatch ? parseInt(portBWMatch[1], 10) : 0;
+    resObj.statusLink = '✅';
+  } else {
+    resObj.statusLink = '❌';
+  }
 
   // Print Status Link
-  console.log(`    - Status Link: ${resObj.statusLink}`);
+  console.log(`    - Status Link: ${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`);
 }
 
 async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
@@ -44,6 +49,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let finalResult = '';
         let loggedin = false;
         let commandExec = false;
+        let secondCommand = false;
         let finished = false;
         let currentCommand = '';
 
@@ -98,7 +104,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
             conn.end();
           }
 
-          // HANDLE MAIN COMMAND
+          // Run LLDP Command
           if (dataStr.includes(`<${datek.hostname_ne}>`) && !commandExec) {
             commandExec = true;
             currentCommand = `display lldp neighbor brief`;
@@ -106,15 +112,24 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
             stream.write(`${currentCommand}\n`);
           }
 
-          // HANDLE FINISHING (QUIT NMS)
-          if (commandExec && dataStr.includes('>') && !finished) {
+          // Handle Pagination
+          if (dataStr.includes('---- More ----') && !finished) {
             finished = true;
-            console.log(`    - Quit the NMS Server`);
-            stream.write(`quit\n`);
+            result += '\n';
+            console.log('    - Pagination Detected: Sending Space');
+            stream.write(' ');
+          }
+
+          // Run Interface Command
+          if (commandExec && dataStr.includes(`<${datek.hostname_ne}>`) && !finished && !secondCommand) {
+            secondCommand = true;
+            currentCommand = `display interface ${resObj.interface}`;
+            console.log(`    - Executing Command: ${currentCommand}`);
+            stream.write(`${currentCommand}\n`);
           }
 
           // HANDLE CLOSING SSH CONNECTION
-          if (finished && dataStr.includes('closed.')) {
+          if (finished && dataStr.includes(`<${datek.hostname_ne}>`)) {
             console.log('    - SSH Stream Closed');
             conn.end();
           }

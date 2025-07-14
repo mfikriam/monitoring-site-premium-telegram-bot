@@ -2,6 +2,8 @@ import { Client as SSHClient } from 'ssh2';
 
 function linksParser(resultString, resObj) {
   // console.log(resultString);
+  resObj.statusLink = '✅';
+
   for (const intf of resObj.interfaces) {
     const regex = new RegExp(`\\s+${intf.portName}\\s+\\S+\\s+(\\S+)`, 'i');
     const match = resultString.match(regex);

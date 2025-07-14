@@ -1,15 +1,15 @@
 // Import Handlers
 import deviceHandler from './donggala-devices-handler.js';
 
-async function detailSegment(msg, dateks, defaultConfig, segmentInfo) {
+async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices) {
   // Destruct Segment Info
-  const { title, routes, interfacesNE } = segmentInfo;
+  const { title, routes, interfacesNE, segBreak = false } = segmentInfo;
 
   // Print Title
-  console.log(`\n[Detail Segment : ${title}]\n`);
+  if (!segBreak) console.log(`\n[Detail Segment : ${title}]\n`);
 
   // Add Title to Message
-  msg += `\n<b>${title}</b>\n`;
+  if (!segBreak) msg += `\n<b>${title}</b>\n`;
 
   // Add First Route to Message
   msg += `- ${routes[0]}`;
@@ -25,7 +25,7 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo) {
 
     // Find the datek object for the source
     const datek = dateks.find((data) => data.id === src);
-    // const datekDest = dateks.find((data) => data.id === dest);
+    const datekDest = dateks.find((data) => data.id === dest);
 
     // Initialize Result Object
     const resObj = {
@@ -41,8 +41,17 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo) {
 
     // Add Result Object to Message
     msg += ` <${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}> ${dest}`;
+
+    // Add LOS Interface to Array
+    if (resObj.statusLink === '❌') {
+      losInterfaces.push(`- ${datek.hostname_ne} ${resObj.interface} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
+    }
+
+    // Add Unmonit Devices to Array
+    if (resObj.statusLink === '⬛') unmonitDevices.push(datek.hostname_ne);
   }
 
+  msg += `\n`;
   return msg;
 }
 
