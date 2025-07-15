@@ -1,6 +1,9 @@
 // Import Handlers
 import deviceHandler from './donggala-devices-handler.js';
 
+// Delay Function
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices) {
   // Destruct Segment Info
   const { title, routes, interfacesNE, segBreak = false } = segmentInfo;
@@ -36,8 +39,18 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfa
       interfaceAlias: interfacesNE.find((route) => route.src === src && route.dest === dest).interfaceAlias,
     };
 
-    // Call Device Handler
-    await deviceHandler(defaultConfig, datek, resObj);
+    // Monitor Device
+    const numMonitor = 3;
+    for (let i = 0; i < numMonitor; i++) {
+      await deviceHandler(defaultConfig, datek, resObj); // Call Device Handler
+      if (resObj.statusLink === '✅') break;
+      if (resObj.statusLink === '❌' && resObj.maxBW !== 0) break;
+
+      // Handle False LOS or Unmonit
+      const delayTime = (i + 1) * 3000;
+      console.log(`    - Trying Re-monitor Device with Delay ${delayTime / 1000} Seconds (Attempt ${i + 1})`);
+      await delay(delayTime);
+    }
 
     // Add Result Object to Message
     msg += ` <${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}> ${dest}`;
