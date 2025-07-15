@@ -27,7 +27,7 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   let segmentInfo = {};
   const losInterfaces = [];
 
-  // 1. Monitor Detail Segment : TWI-TBU Part 1
+  // 1. Monitor Detail Segment : TWI-TBU
   title = '1. TWI-TBU';
   routes = ['TWI', 'DGL105', 'DGL006', 'DGL129', 'TBU'];
   interfacesNE = [
@@ -37,14 +37,6 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
     { src: 'DGL129', dest: 'TBU', interface: 'tengigabitethernet 1/1/26', interfaceAlias: 'TGE1/1/26' },
   ];
   segmentInfo = { title, routes, interfacesNE };
-  msg = await detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices);
-
-  // 1. Monitor Detail Segment : TWI-TBU Part 2
-  routes = ['DGL129', 'DGL030'];
-  interfacesNE = [
-    { src: 'DGL129', dest: 'DGL030', interface: 'tengigabitethernet 1/1/27', interfaceAlias: 'TGE1/1/27' },
-  ];
-  segmentInfo = { title, routes, interfacesNE, segBreak: true };
   msg = await detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices);
 
   // 2. Monitor Detail Segment : TBU-PGI
