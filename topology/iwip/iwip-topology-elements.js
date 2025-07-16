@@ -1,3 +1,20 @@
+export const customStyles = [
+  {
+    selector: 'node[id="IWP"]',
+    style: {
+      'font-weight': 'bold',
+    },
+  },
+  {
+    selector: 'node[size="small"]',
+    style: {
+      'font-size': '9px',
+      width: '50px',
+      height: '50px',
+    },
+  },
+];
+
 export const nodes = [
   { data: { id: 'SFI', label: 'SFI', type: 'router', hostname: 'ME-D7-SFI' }, position: { x: 0, y: 0 } },
   { data: { id: 'WDA', label: 'WDA', type: 'router', hostname: 'ME-D7-WDA' }, position: { x: 200, y: 100 } },

@@ -1,10 +1,13 @@
 // Import Handlers
 import deviceHandler from './donggala-devices-handler.js';
 
+// Import Utilities
+import getEdgeType from '../utils/get-edge-type.js';
+
 // Delay Function
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices) {
+async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices, edges) {
   // Destruct Segment Info
   const { title, routes, interfacesNE, segBreak = false } = segmentInfo;
 
@@ -62,6 +65,13 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfa
 
     // Add Unmonit Devices to Array
     if (resObj.statusLink === '⬛') unmonitDevices.push(datek.hostname_ne);
+
+    // Update Edges
+    const targetEdge = edges.find((edge) => edge.data.source === src && edge.data.target === dest);
+    if (targetEdge) {
+      targetEdge.data.label = `${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`;
+      targetEdge.data.type = getEdgeType(resObj.statusLink);
+    }
   }
 
   msg += `\n`;

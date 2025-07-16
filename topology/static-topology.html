@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Network Topology</title>
+    <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      #cy {
+        width: 800px;
+        height: 600px;
+        margin: auto;
+        border: 1px solid #ccc;
+      }
+      button {
+        margin-bottom: 20px;
+        padding: 10px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="exportButton">Export as PNG</button>
+    <div id="cy"></div>
+
+    <!-- Static Icon Styles -->
+    <script>
+      const iconStyles = [
+        {
+          selector: 'node[type="router"]',
+          style: {
+            'background-image': './assets/router.png',
+          },
+        },
+        {
+          selector: 'node[type="switch"]',
+          style: {
+            'background-image': './assets/workgroup-switch.png',
+          },
+        },
+        {
+          selector: 'node[type="router-unmonit"]',
+          style: {
+            'background-image': './assets/router-red.png',
+          },
+        },
+        {
+          selector: 'node[type="switch-unmonit"]',
+          style: {
+            'background-image': './assets/workgroup-switch-red.png',
+          },
+        },
+      ];
+    </script>
+
+    <script type="module">
+      // // Iwip Topology
+      // import { customStyles, nodes, edgesDWDM, edgesRIP, edgesL2SW } from './iwip/iwip-topology-elements.js';
+      // import { primaryStyles } from './primary-styles.js';
+      // const edges = [...edgesDWDM, ...edgesRIP, ...edgesL2SW];
+      // const styles = [...primaryStyles, ...iconStyles, ...customStyles];
+
+      // Donggala Topology
+      import { customStyles, nodes, edges } from './donggala/donggala-topology-elements.js';
+      import { primaryStyles } from './primary-styles.js';
+      const styles = [...primaryStyles, ...iconStyles, ...customStyles];
+
+      const cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: [...nodes, ...edges],
+        style: styles,
+        layout: { name: 'preset' },
+        userZoomingEnabled: true,
+        userPanningEnabled: true,
+      });
+
+      function exportImage() {
+        const png = cy.png({ full: true, bg: 'white', scale: 2 });
+        const link = document.createElement('a');
+        link.href = png;
+        link.download = 'network-topology.png';
+        link.click();
+      }
+
+      document.getElementById('exportButton').addEventListener('click', exportImage);
+    </script>
+  </body>
+</html>

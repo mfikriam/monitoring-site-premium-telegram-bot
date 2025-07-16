@@ -2,14 +2,12 @@ import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
 
-export async function generateTopologyImage({ elements, output = 'topology/topology.png', returnBuffer = false }) {
-  const assetPath = path.resolve('./topology/assets');
-
-  const base64Router = fs.readFileSync(path.join(assetPath, 'router.png')).toString('base64');
-  const base64RouterUnmonit = fs.readFileSync(path.join(assetPath, 'router-red.png')).toString('base64');
-  const base64Switch = fs.readFileSync(path.join(assetPath, 'workgroup-switch.png')).toString('base64');
-  const base64SwitchUnmonit = fs.readFileSync(path.join(assetPath, 'workgroup-switch-red.png')).toString('base64');
-
+export async function generateTopologyImage({
+  elements,
+  styles,
+  output = 'topology/topology.png',
+  returnBuffer = false,
+}) {
   const htmlContent = `
     <html><head>
       <meta charset="UTF-8">
@@ -24,100 +22,8 @@ export async function generateTopologyImage({ elements, output = 'topology/topol
       const cy = cytoscape({
         container: document.getElementById('cy'),
         elements: ${JSON.stringify(elements)},
+        style: ${JSON.stringify(styles)},
         layout: { name: 'preset' },
-        style: [
-          {
-            selector: 'node',
-            style: {
-              'background-color': 'transparent',
-              'background-opacity': 0,
-              'border-color': '#0074D9',
-              'border-width': 0,
-              shape: 'rectangle',
-              label: 'data(label)',
-              'text-valign': 'bottom',
-              'text-halign': 'center',
-              'font-size': '10px',
-              width: '60px',
-              height: '60px',
-              'background-fit': 'contain',
-              'text-margin-y': '-5px',
-            },
-          },
-          {
-            selector: 'node[type="router"]',
-            style: {
-              'background-image': 'url("data:image/png;base64,${base64Router}")',
-            },
-          },
-          {
-            selector: 'node[type="switch"]',
-            style: {
-              'background-image': 'url("data:image/png;base64,${base64Switch}")',
-            },
-          },
-          {
-            selector: 'node[type="router-unmonit"]',
-            style: {
-              'background-image': 'url("data:image/png;base64,${base64RouterUnmonit}")',
-            },
-          },
-          {
-            selector: 'node[type="switch-unmonit"]',
-            style: {
-              'background-image': 'url("data:image/png;base64,${base64SwitchUnmonit}")',
-            },
-          },
-          {
-            selector: 'node[id="IWP"]',
-            style: {
-              'font-weight': 'bold',
-            },
-          },
-          {
-            selector: 'node[size="small"]',
-            style: {
-              'font-size': '9px',
-              width: '50px',
-              height: '50px',
-            },
-          },
-          {
-            selector: 'edge',
-            style: {
-              label: 'data(label)',
-              color: '#000',
-              'font-size': '9px',
-              'font-weight': 'bold',
-              'text-background-color': '#fff',
-              'text-background-opacity': 1,
-              'text-background-padding': '2px',
-              width: 2,
-              'curve-style': 'segments',
-              'segment-distances': 'data(distances)',
-              'segment-weights': 'data(weights)',
-            },
-          },
-          {
-            selector: 'edge[type="working"]',
-            style: {
-              'line-color': '#2ecc40',
-              'font-weight': 'normal',
-            },
-          },
-          {
-            selector: 'edge[type="los"]',
-            style: {
-              'line-color': '#ff4136',
-            },
-          },
-          {
-            selector: 'edge[type="warning"]',
-            style: {
-              'line-color': '#ff851b',
-            },
-          },
-        ]
       });
       window.cy = cy;
     </script>
@@ -140,15 +46,12 @@ export async function generateTopologyImage({ elements, output = 'topology/topol
   if (returnBuffer) {
     await browser.close();
     return buffer;
-  } else {
-    // Ensure folder exists
-    const dir = path.dirname(output);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(output, buffer);
-    await browser.close();
-    console.log(`Image Saved: ${output}`);
-    return output;
   }
+
+  const dir = path.dirname(output);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); // Ensure folder exists
+  fs.writeFileSync(output, buffer);
+  await browser.close();
+  console.log(`Image Saved: ${output}`);
+  return output;
 }

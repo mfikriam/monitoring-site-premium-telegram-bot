@@ -6,10 +6,12 @@ import ringL2SW from './iwip-ring-l2sw.js';
 
 // Import Utilities
 import currentDateTime from '../utils/get-current-datetime.js';
-import { generateTopologyImage } from '../topology/generate-topology-image.js';
 
-// Import Data
-import { nodes, edgesDWDM, edgesRIP, edgesL2SW } from '../topology/topology-elements.js';
+// Import Topology Data & Functions
+import { generateTopologyImage } from '../topology/generate-topology-image.js';
+import { primaryStyles } from '../topology/primary-styles.js';
+import { iconStyles } from '../topology/icon-styles.js';
+import { customStyles, nodes, edgesDWDM, edgesRIP, edgesL2SW } from '../topology/iwip/iwip-topology-elements.js';
 
 async function monitoringPremiumHandler(msg, defaultConfig) {
   // Get Dateks
@@ -47,12 +49,14 @@ async function monitoringPremiumHandler(msg, defaultConfig) {
     });
   }
 
-  // Define Elements
+  // Define Elements & Output Path
+  const styles = [...primaryStyles, ...iconStyles, ...customStyles];
   const elements = [...nodes, ...edgesDWDM, ...edgesRIP, ...edgesL2SW];
+  const output = 'topology/iwip/iwip-topology.png';
 
   // Get Topology Image Buffer
   console.log('\nStarting Generate Topology Image....');
-  const imageBuffer = await generateTopologyImage({ elements, returnBuffer: true });
+  const imageBuffer = await generateTopologyImage({ elements, styles, output, returnBuffer: true });
   console.log(`Buffer Created:`);
   console.log(imageBuffer);
   if (Buffer.isBuffer(imageBuffer) && imageBuffer.length > 0) return { imageBuffer, caption: msg };
