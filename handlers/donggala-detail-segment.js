@@ -51,7 +51,7 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfa
 
       // Handle False LOS or Unmonit
       const delayTime = (i + 1) * 3000;
-      console.log(`    - Trying Re-monitor Device with Delay ${delayTime / 1000} Seconds (Attempt ${i + 1})`);
+      console.log(`    - Trying Recheck Device with Delay ${delayTime / 1000} Seconds (Attempt ${i + 1})`);
       await delay(delayTime);
     }
 

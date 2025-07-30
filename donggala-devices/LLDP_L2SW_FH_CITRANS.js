@@ -22,7 +22,7 @@ function checkInterfaceStatus(resultString, resObj) {
   console.log(`    - Status Link: ${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`);
 }
 
-async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
+async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();
@@ -52,6 +52,8 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let secondCommand = false;
         let finished = false;
         let currentCommand = '';
+        let isTimeOut = false;
+        let authFailed = false;
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
         timeoutHandle = setTimeout(() => {
@@ -64,7 +66,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle);
-          checkInterfaceStatus(finalResult, resObj);
+          if (!authFailed && !isTimeOut) checkInterfaceStatus(finalResult, resObj);
           resolve();
         });
 

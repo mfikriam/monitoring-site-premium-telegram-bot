@@ -23,6 +23,7 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
 
   // Monitor Main Segment
   const unmonitDevices = [];
+  const losInterfaces = [];
   msg = await mainSegment(msg, dateks, defaultConfig, unmonitDevices);
 
   // Start Detail Segment
@@ -31,7 +32,6 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   let routes = [];
   let interfacesNE = [];
   let segmentInfo = {};
-  const losInterfaces = [];
 
   // 1. Monitor Detail Segment : TWI-TBU
   title = '1. TWI-TBU';

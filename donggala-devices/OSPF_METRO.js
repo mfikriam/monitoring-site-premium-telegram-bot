@@ -1,6 +1,6 @@
 import { Client as SSHClient } from 'ssh2';
 
-function linksParser(resultString, resObj) {
+function checkInterfaceStatus(resultString, resObj) {
   // console.log(resultString);
   resObj.statusLink = '✅';
 
@@ -17,7 +17,7 @@ function linksParser(resultString, resObj) {
   }
 }
 
-async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
+async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
   return new Promise((resolve, reject) => {
     // CREATE SSH CONN INSTANCE
     const conn = new SSHClient();
@@ -46,9 +46,12 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         let commandExec = false;
         let finished = false;
         let currentCommand = '';
+        let isTimeOut = false;
+        let authFailed = false;
 
         // SET A TIMEOUT TO LIMIT STREAMING TIME
         timeoutHandle = setTimeout(() => {
+          isTimeOut = true; // Set time out to true
           console.log('    - Streaming Timeout Exceeded');
           stream.end(); // End the stream if timeout is reached
           console.log('    - SSH Stream Closed');
@@ -58,7 +61,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle);
-          linksParser(finalResult, resObj);
+          if (!authFailed && !isTimeOut) checkInterfaceStatus(finalResult, resObj);
           resolve();
         });
 
@@ -93,6 +96,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 60000 }) {
 
           // HANDLE NE AUTH FAILED
           if (dataStr.includes('Permission denied, please try again.')) {
+            authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
           }
