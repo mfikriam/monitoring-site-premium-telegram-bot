@@ -20,6 +20,7 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfa
 
   // Print Title
   if (!segBreak) console.log(`\n[Detail Segment : ${title}]\n`);
+  else console.log(`-------------------------- Segment Break --------------------------`);
 
   // Add Title to Message
   if (!segBreak) msg += `\n<b>${title}</b>\n`;

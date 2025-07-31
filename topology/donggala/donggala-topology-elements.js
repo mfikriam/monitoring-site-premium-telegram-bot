@@ -7,6 +7,14 @@ export const customStyles = [
       height: '50px',
     },
   },
+  {
+    selector: 'node[id="PAL1"]',
+    style: {
+      'font-size': '9px',
+      width: '50px',
+      height: '50px',
+    },
+  },
 ];
 
 export const nodes = [
@@ -20,9 +28,15 @@ export const nodes = [
     position: { x: 250, y: -125 },
   },
   {
+    data: { id: 'DGL007', label: 'DGL007', type: 'switch', hostname: 'L2SW-D7-DGL007' },
+    position: { x: 250, y: 0 },
+  },
+  {
     data: { id: 'DGL129', label: 'DGL129', type: 'switch', hostname: 'L2SW-D7-DGL129' },
     position: { x: 375, y: -125 },
   },
+  // ---------------------------- //
+  { data: { id: 'PAL1', label: 'PAL1', type: 'router', hostname: 'ME9-D7-PAL1' }, position: { x: 0, y: 0 } },
   // ---------------------------- //
   { data: { id: 'TBU', label: 'TBU', type: 'router', hostname: 'SME-D7-TBU' }, position: { x: 375, y: 0 } },
   {
@@ -37,7 +51,7 @@ export const nodes = [
     data: { id: 'PGI003', label: 'PGI003', type: 'switch', hostname: 'SW-D7-TSEL-PGI003-10G-4' },
     position: { x: 125, y: 125 },
   },
-  { data: { id: 'PGI', label: 'PGI', type: 'router', hostname: 'ME-D7-PRG' }, position: { x: 0, y: 125 } },
+  { data: { id: 'PRG', label: 'PRG', type: 'router', hostname: 'ME-D7-PRG' }, position: { x: 0, y: 125 } },
   // ---------------------------- //
   {
     data: { id: 'DGL030', label: 'DGL030', type: 'switch', hostname: 'L2SW-D7-DGL030' },
@@ -95,6 +109,16 @@ export const edges = [
   {
     data: {
       source: 'DGL006',
+      target: 'DGL007',
+      label: '#/# ⬛',
+      type: '',
+      distances: [0],
+      weights: [0.5],
+    },
+  },
+  {
+    data: {
+      source: 'DGL007',
       target: 'DGL129',
       label: '#/# ⬛',
       type: '',
@@ -112,7 +136,28 @@ export const edges = [
       weights: [0.5],
     },
   },
-  // ----------- 2. TBU-PGI ----------- //
+  // -------------- Break -------------- //
+  {
+    data: {
+      source: 'TWI',
+      target: 'PAL1',
+      label: '#/# ⬛',
+      type: '',
+      distances: [0],
+      weights: [0.5],
+    },
+  },
+  {
+    data: {
+      source: 'PAL1',
+      target: 'PRG',
+      label: '#/# ⬛',
+      type: '',
+      distances: [0],
+      weights: [0.5],
+    },
+  },
+  // ----------- 2. TBU-PRG ----------- //
   {
     data: {
       source: 'TBU',
@@ -146,7 +191,7 @@ export const edges = [
   {
     data: {
       source: 'PGI003',
-      target: 'PGI',
+      target: 'PRG',
       label: '#/# ⬛',
       type: '',
       distances: [0],

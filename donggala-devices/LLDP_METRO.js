@@ -141,14 +141,18 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
 
           // Handle Pagination
           if (dataStr.includes('---- More ----') && !finished) {
-            finished = true;
             result += '\n';
             console.log('    - Pagination Detected: Sending Space');
             stream.write(' ');
           }
 
           // Quit The NMS Server
-          if (commandExec && dataStr.includes('>') && !finished) {
+          if (
+            result.includes(`Neighbor Dev`) &&
+            commandExec &&
+            dataStr.includes(`<${datek.hostname_ne}>`) &&
+            !finished
+          ) {
             finished = true;
             console.log(`    - Quit the NMS Server`);
             stream.write(`quit\n`);

@@ -18,7 +18,7 @@ async function mainSegment(msg, dateks, defaultConfig, unmonitDevices) {
     statusLink: '⬛',
     interfaces: [
       { route: 'TWI-TBU', name: 'GE0/1/0.13', status: '⬛' },
-      { route: 'TBU-PGI', name: 'GE0/3/0.14', status: '⬛' },
+      { route: 'TBU-PRG', name: 'GE0/3/0.14', status: '⬛' },
       { route: 'TBU-STG', name: 'GE0/1/1.15', status: '⬛' },
     ],
   };

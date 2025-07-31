@@ -36,7 +36,7 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   // 1. Monitor Detail Segment : TWI-TBU
   interfacesNE = [];
   title = '1. TWI-TBU';
-  routes = ['TWI', 'DGL105', 'DGL006', 'DGL129', 'TBU'];
+  routes = ['TWI', 'DGL105', 'DGL006', 'DGL007', 'DGL129', 'TBU'];
   interfacesNE.push({
     src: 'TWI',
     dest: 'DGL105',
@@ -49,8 +49,13 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   });
   interfacesNE.push({
     src: 'DGL006',
+    dest: 'DGL007',
+    interfaces: [{ name: 'tengigabitethernet 1/1/27', alias: 'TGE1/1/27' }],
+  });
+  interfacesNE.push({
+    src: 'DGL007',
     dest: 'DGL129',
-    interfaces: [{ name: 'tengigabitethernet 1/1/28', alias: 'TGE1/1/28' }],
+    interfaces: [{ name: 'xgigaethernet 1/2/1', alias: 'xge-1/2/1' }],
   });
   interfacesNE.push({
     src: 'DGL129',
@@ -60,10 +65,37 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   segmentInfo = { title, routes, interfacesNE };
   msg = await detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices, edges);
 
-  // 2. Monitor Detail Segment : TBU-PGI
+  // Segment Break : TWI <> PAL1 <> PRG
   interfacesNE = [];
-  title = '2. TBU-PGI';
-  routes = ['TBU', 'PGI063', 'PGI004', 'PGI003', 'PGI'];
+  routes = ['TWI', 'PAL1', 'PRG'];
+  interfacesNE.push({
+    src: 'TWI',
+    dest: 'PAL1',
+    interfaces: [
+      { name: 'GigabitEthernet2/1/0', alias: '-' },
+      { name: 'GigabitEthernet3/0/3', alias: '-' },
+      { name: 'GigabitEthernet3/1/0', alias: '-' },
+      { name: 'GigabitEthernet3/1/1', alias: '-' },
+    ],
+  });
+  interfacesNE.push({
+    src: 'PAL1',
+    dest: 'PRG',
+    interfaces: [
+      { name: 'GigabitEthernet1/1/4', alias: '-' },
+      { name: 'GigabitEthernet1/1/5', alias: '-' },
+      { name: 'GigabitEthernet3/1/0', alias: '-' },
+      { name: 'GigabitEthernet3/1/7', alias: '-' },
+      { name: 'GigabitEthernet3/1/8', alias: '-' },
+    ],
+  });
+  segmentInfo = { title, routes, interfacesNE, segBreak: true };
+  msg = await detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices, edges);
+
+  // 2. Monitor Detail Segment : TBU-PRG
+  interfacesNE = [];
+  title = '2. TBU-PRG';
+  routes = ['TBU', 'PGI063', 'PGI004', 'PGI003', 'PRG'];
   interfacesNE.push({
     src: 'TBU',
     dest: 'PGI063',
@@ -81,7 +113,7 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   });
   interfacesNE.push({
     src: 'PGI003',
-    dest: 'PGI',
+    dest: 'PRG',
     interfaces: [
       { name: 'XGE0/1/1', alias: 'XGE0/1/1' },
       { name: 'XGE0/1/2', alias: 'XGE0/1/2' },
