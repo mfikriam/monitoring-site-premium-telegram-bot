@@ -17,9 +17,9 @@ async function mainSegment(msg, dateks, defaultConfig, unmonitDevices) {
     // maxBW: '#',
     statusLink: '⬛',
     interfaces: [
-      { portRoute: 'TWI-TBU', portName: 'GE0/1/0.13', portStatus: '⬛' },
-      { portRoute: 'TBU-PGI', portName: 'GE0/3/0.14', portStatus: '⬛' },
-      { portRoute: 'TBU-STG', portName: 'GE0/1/1.15', portStatus: '⬛' },
+      { route: 'TWI-TBU', name: 'GE0/1/0.13', status: '⬛' },
+      { route: 'TBU-PGI', name: 'GE0/3/0.14', status: '⬛' },
+      { route: 'TBU-STG', name: 'GE0/1/1.15', status: '⬛' },
     ],
   };
 
@@ -30,9 +30,9 @@ async function mainSegment(msg, dateks, defaultConfig, unmonitDevices) {
   // Add Interfaces Status to Message
   resObj.interfaces.forEach((intf) => {
     let statusDesc = 'Unmonitor';
-    if (intf.portStatus === '✅') statusDesc = 'FULL';
-    if (intf.portStatus === '❌') statusDesc = 'DOWN';
-    msg += `${intf.portRoute} : ${statusDesc} ${intf.portStatus}\n`;
+    if (intf.status === '✅') statusDesc = 'FULL';
+    if (intf.status === '❌') statusDesc = 'DOWN';
+    msg += `${intf.route} : ${statusDesc} ${intf.status}\n`;
   });
 
   // Add Unmonit Devices to Array

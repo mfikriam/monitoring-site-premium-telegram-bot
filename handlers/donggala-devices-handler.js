@@ -2,8 +2,7 @@
 import OSPF_METRO from '../donggala-devices/OSPF_METRO.js';
 import LLDP_METRO from '../donggala-devices/LLDP_METRO.js';
 import LLDP_L2SW_RAISECOM from '../donggala-devices/LLDP_L2SW_RAISECOM.js';
-import LLDP_L2SW_FH_S5800 from '../donggala-devices/LLDP_L2SW_FH_S5800.js';
-import LLDP_L2SW_FH_S6800 from '../donggala-devices/LLDP_L2SW_FH_S6800.js';
+import LLDP_L2SW_FH_S_SERIES from '../donggala-devices/LLDP_L2SW_FH_S_SERIES.js';
 import LLDP_L2SW_FH_CITRANS from '../donggala-devices/LLDP_L2SW_FH_CITRANS.js';
 import L2SW_FH_S5800 from '../donggala-devices/L2SW_FH_S5800.js';
 
@@ -33,9 +32,8 @@ async function deviceHandler(defaultConfig, datek, resObj) {
     case 'L2SW RAISECOM':
       return await LLDP_L2SW_RAISECOM(deviceParams);
     case 'L2SW FH S5800':
-      return await LLDP_L2SW_FH_S5800(deviceParams);
     case 'L2SW FH S6800':
-      return await LLDP_L2SW_FH_S6800(deviceParams);
+      return await LLDP_L2SW_FH_S_SERIES(deviceParams);
     case 'L2SW FH CITRANS':
       return await LLDP_L2SW_FH_CITRANS(deviceParams);
     default:

@@ -1,22 +1,40 @@
 import { Client as SSHClient } from 'ssh2';
 
+// Import Utils
+import getWarningStatus from '../utils/get-warning-status.js';
+
 function checkInterfaceStatus(resultString, resObj) {
   // console.log(resultString);
 
-  // Update Interface Bandwidth
-  const portBWMatch = resultString.match(/Port BW:\s*(\d+)G/);
-  const maxBWMatch = resultString.match(/max BW:\s*(\d+)G/);
-  resObj.maxBW = maxBWMatch ? parseInt(maxBWMatch[1], 10) : 0;
+  // Initialized Current BW & Max BW
+  resObj.currentBW = 0;
+  resObj.maxBW = resObj.interfaces.length * 10;
 
-  // Update Interface Status
+  // Initialize Status Link
+  resObj.statusLink = '✅';
+
+  // Parsing Result String
   const lines = resultString.trim().split('\n').slice(2);
   const localInterfaces = lines.map((line) => line.trim().split(/\s+/)[0]);
-  if (localInterfaces.includes(resObj.interface)) {
-    resObj.currentBW = portBWMatch ? parseInt(portBWMatch[1], 10) : 0;
-    resObj.statusLink = '✅';
-  } else {
-    resObj.statusLink = '❌';
+
+  // Check All Interfaces
+  for (const intf of resObj.interfaces) {
+    // Update Interface Status
+    if (localInterfaces.includes(intf.name)) {
+      resObj.currentBW += 10;
+      intf.status = '✅';
+    } else {
+      resObj.statusLink = '❌';
+      intf.status = '❌';
+    }
+
+    // Print Status Interface
+    const portDesc = intf.status === '✅' ? 'Working' : 'LOS';
+    console.log(`    - Status Interface ${intf.name}: ${portDesc} ${intf.status}`);
   }
+
+  // Check Warning Status
+  resObj.statusLink = getWarningStatus(resObj.statusLink, resObj.currentBW, resObj.maxBW);
 
   // Print Status Link
   console.log(`    - Status Link: ${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`);
@@ -49,7 +67,6 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
         let finalResult = '';
         let loggedin = false;
         let commandExec = false;
-        let secondCommand = false;
         let finished = false;
         let currentCommand = '';
         let isTimeOut = false;
@@ -66,7 +83,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle);
-          if (!authFailed && !isTimeOut) checkInterfaceStatus(finalResult, resObj);
+          if (!authFailed && !isTimeOut && loggedin) checkInterfaceStatus(finalResult, resObj);
           resolve();
         });
 
@@ -79,6 +96,13 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
           // STORE THE STREAM DATA
           result += dataStr;
           if (commandExec) finalResult += dataStr;
+
+          // Handle Forced Closed By Device
+          if (!loggedin && dataStr.includes('Connection closed by foreign host.')) {
+            authFailed = true;
+            console.log('    - Connection Blocked By Device (Forced Closed)');
+            conn.end();
+          }
 
           // Handle RNO NMS SSH To NE
           if (!loggedin && dataStr.includes('rno7app:~$')) {
@@ -123,16 +147,15 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
             stream.write(' ');
           }
 
-          // Run Interface Command
-          if (commandExec && dataStr.includes(`<${datek.hostname_ne}>`) && !finished && !secondCommand) {
-            secondCommand = true;
-            currentCommand = `display interface ${resObj.interface}`;
-            console.log(`    - Executing Command: ${currentCommand}`);
-            stream.write(`${currentCommand}\n`);
+          // Quit The NMS Server
+          if (commandExec && dataStr.includes('>') && !finished) {
+            finished = true;
+            console.log(`    - Quit the NMS Server`);
+            stream.write(`quit\n`);
           }
 
-          // HANDLE CLOSING SSH CONNECTION
-          if (finished && dataStr.includes(`<${datek.hostname_ne}>`)) {
+          // CLose SSH Connection
+          if (finished && dataStr.includes('closed.')) {
             console.log('    - SSH Stream Closed');
             conn.end();
           }

@@ -1,22 +1,40 @@
 import { Client as SSHClient } from 'ssh2';
 
+// Import Utils
+import getWarningStatus from '../utils/get-warning-status.js';
+
 function checkInterfaceStatus(resultString, resObj) {
   // console.log(resultString);
 
-  // Update Interface Bandwidth
-  const maxBWMatch = resultString.match(/Speed\s*(is|:)\s*(\d+)M\(bps\)/i);
+  // Initialized Current BW & Max BW
   resObj.currentBW = 0;
-  resObj.maxBW = maxBWMatch ? parseInt(maxBWMatch[2], 10) / 1000 : 0;
+  resObj.maxBW = resObj.interfaces.length * 10;
 
-  // Update Interface Status
+  // Initialize Status Link
+  resObj.statusLink = '✅';
+
+  // Parsing Result String
   const lines = resultString.trim().split('\n');
   const localInterfaces = lines.map((line) => line.trim().split(/\s+/)[0]);
-  if (localInterfaces.includes(resObj.interfaceAlias)) {
-    resObj.currentBW += resObj.maxBW;
-    resObj.statusLink = '✅';
-  } else {
-    resObj.statusLink = '❌';
+
+  // Check All Interfaces
+  for (const intf of resObj.interfaces) {
+    // Update Interface Status
+    if (localInterfaces.includes(intf.alias)) {
+      resObj.currentBW += 10;
+      intf.status = '✅';
+    } else {
+      resObj.statusLink = '❌';
+      intf.status = '❌';
+    }
+
+    // Print Status Interface
+    const portDesc = intf.status === '✅' ? 'Working' : 'LOS';
+    console.log(`    - Status Interface ${intf.name}: ${portDesc} ${intf.status}`);
   }
+
+  // Check Warning Status
+  resObj.statusLink = getWarningStatus(resObj.statusLink, resObj.currentBW, resObj.maxBW);
 
   // Print Status Link
   console.log(`    - Status Link: ${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}`);
@@ -49,7 +67,6 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
         let finalResult = '';
         let loggedin = false;
         let commandExec = false;
-        let secondCommand = false;
         let finished = false;
         let currentCommand = '';
         let isTimeOut = false;
@@ -66,7 +83,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle);
-          if (!authFailed && !isTimeOut) checkInterfaceStatus(finalResult, resObj);
+          if (!authFailed && !isTimeOut && loggedin) checkInterfaceStatus(finalResult, resObj);
           resolve();
         });
 
@@ -80,6 +97,13 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
           result += dataStr;
           if (commandExec) finalResult += dataStr;
 
+          // Handle Forced Closed By Device
+          if (!loggedin && dataStr.includes('Connection closed by foreign host.')) {
+            authFailed = true;
+            console.log('    - Connection Blocked By Device (Forced Closed)');
+            conn.end();
+          }
+
           // Handle RNO NMS SSH To NE
           if (!loggedin && dataStr.includes('rno7app:~$')) {
             currentCommand = `telnet ${datek.ip_ne}`;
@@ -87,21 +111,28 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
             stream.write(`${currentCommand}\n`);
           }
 
-          // HANDLE NE AUTH: USERNAME
+          // Handle Auth Username
           if (dataStr.includes('Username:') && !loggedin) {
             console.log(`    - Entering NE Username: ${neConfig.username}`);
             stream.write(`${neConfig.username}\n`);
           }
 
-          // HANDLE NE AUTH: PASSWORD
+          // Handle Auth Password
           if (dataStr.includes('Password:') && !loggedin) {
             loggedin = true;
             console.log(`    - Entering NE Password: ${neConfig.password}`);
             stream.write(`${neConfig.password}\n`);
           }
 
-          // HANDLE NE AUTH FAILED
+          // Handle Auth Failed : S5800
           if (dataStr.includes('No such user or bad password.') && loggedin) {
+            authFailed = true;
+            console.log(`    - NE Auth Failed`);
+            conn.end();
+          }
+
+          // Handle Auth Failed : S6800
+          if (dataStr.includes('User login failed.') && loggedin) {
             authFailed = true;
             console.log(`    - NE Auth Failed`);
             conn.end();
@@ -122,25 +153,10 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
             stream.write(' ');
           }
 
-          // Run Interface Command
-          if (
-            commandExec &&
-            result.includes(`Remote system information:`) &&
-            dataStr.includes(`${datek.hostname_ne}#`) &&
-            !finished &&
-            !secondCommand
-          ) {
-            secondCommand = true;
-            currentCommand = `show interface ${resObj.interface}`;
-            console.log(`    - Executing Command: ${currentCommand}`);
-            stream.write(`${currentCommand}\n`);
-          }
-
           // Quit The NMS Server
           if (
+            result.includes(`Remote system information:`) &&
             commandExec &&
-            secondCommand &&
-            (result.includes(`Other statistic:`) || result.includes(`Output bandwidth utilization :`)) &&
             dataStr.includes(`${datek.hostname_ne}#`) &&
             !finished
           ) {
@@ -149,7 +165,7 @@ async function L2SW({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
             stream.write(`quit\n`);
           }
 
-          // HANDLE CLOSING SSH CONNECTION
+          // Close SSH Connection
           if (finished && dataStr.includes('Connection closed by foreign host.')) {
             console.log('    - SSH Stream Closed');
             conn.end();

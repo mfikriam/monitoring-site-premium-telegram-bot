@@ -34,42 +34,106 @@ async function monitoringDonggalaHandler(msg, defaultConfig) {
   let segmentInfo = {};
 
   // 1. Monitor Detail Segment : TWI-TBU
+  interfacesNE = [];
   title = '1. TWI-TBU';
   routes = ['TWI', 'DGL105', 'DGL006', 'DGL129', 'TBU'];
-  interfacesNE = [
-    { src: 'TWI', dest: 'DGL105', interface: 'GigabitEthernet3/0/4' },
-    { src: 'DGL105', dest: 'DGL006', interface: 'tengigabitethernet 1/1/27', interfaceAlias: 'TGE1/1/27' },
-    { src: 'DGL006', dest: 'DGL129', interface: 'tengigabitethernet 1/1/28', interfaceAlias: 'TGE1/1/28' },
-    { src: 'DGL129', dest: 'TBU', interface: 'tengigabitethernet 1/1/26', interfaceAlias: 'TGE1/1/26' },
-  ];
+  interfacesNE.push({
+    src: 'TWI',
+    dest: 'DGL105',
+    interfaces: [{ name: 'GigabitEthernet3/0/4', alias: '-' }],
+  });
+  interfacesNE.push({
+    src: 'DGL105',
+    dest: 'DGL006',
+    interfaces: [{ name: 'tengigabitethernet 1/1/27', alias: 'TGE1/1/27' }],
+  });
+  interfacesNE.push({
+    src: 'DGL006',
+    dest: 'DGL129',
+    interfaces: [{ name: 'tengigabitethernet 1/1/28', alias: 'TGE1/1/28' }],
+  });
+  interfacesNE.push({
+    src: 'DGL129',
+    dest: 'TBU',
+    interfaces: [{ name: 'tengigabitethernet 1/1/26', alias: 'TGE1/1/26' }],
+  });
   segmentInfo = { title, routes, interfacesNE };
   msg = await detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices, edges);
 
   // 2. Monitor Detail Segment : TBU-PGI
+  interfacesNE = [];
   title = '2. TBU-PGI';
   routes = ['TBU', 'PGI063', 'PGI004', 'PGI003', 'PGI'];
-  interfacesNE = [
-    { src: 'TBU', dest: 'PGI063', interface: 'GigabitEthernet0/3/0' },
-    { src: 'PGI063', dest: 'PGI004', interface: 'tengigabitethernet 1/1/25', interfaceAlias: 'TGE1/1/25' },
-    { src: 'PGI004', dest: 'PGI003', interface: '10gigaethernet 1/1/1', interfaceAlias: '10ge1/1/1' },
-    { src: 'PGI003', dest: 'PGI', interface: 'XGE0/1/2', interfaceAlias: 'XGE0/1/2' },
-  ];
+  interfacesNE.push({
+    src: 'TBU',
+    dest: 'PGI063',
+    interfaces: [{ name: 'GigabitEthernet0/3/0', alias: '-' }],
+  });
+  interfacesNE.push({
+    src: 'PGI063',
+    dest: 'PGI004',
+    interfaces: [{ name: 'tengigabitethernet 1/1/25', alias: 'TGE1/1/25' }],
+  });
+  interfacesNE.push({
+    src: 'PGI004',
+    dest: 'PGI003',
+    interfaces: [{ name: '10gigaethernet 1/1/1', alias: '10ge1/1/1' }],
+  });
+  interfacesNE.push({
+    src: 'PGI003',
+    dest: 'PGI',
+    interfaces: [
+      { name: 'XGE0/1/1', alias: 'XGE0/1/1' },
+      { name: 'XGE0/1/2', alias: 'XGE0/1/2' },
+    ],
+  });
   segmentInfo = { title, routes, interfacesNE };
   msg = await detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices, edges);
 
   // 3. Monitor Detail Segment : TBU-STG
+  interfacesNE = [];
   title = '3. TBU-STG';
   routes = ['TBU', 'DGL030', 'DGL175', 'DGL079', 'DGL034', 'TLI005', 'TLI041', 'TLI008', 'STG'];
-  interfacesNE = [
-    { src: 'TBU', dest: 'DGL030', interface: 'GigabitEthernet0/1/1' },
-    { src: 'DGL030', dest: 'DGL175', interface: 'xgigaethernet 1/2/1', interfaceAlias: 'xge-1/2/1' },
-    { src: 'DGL175', dest: 'DGL079', interface: 'xgigaethernet 1/2/1', interfaceAlias: 'xge-1/2/1' },
-    { src: 'DGL079', dest: 'DGL034', interface: 'xgigaethernet 1/2/1', interfaceAlias: 'xge-1/2/1' },
-    { src: 'DGL034', dest: 'TLI005', interface: 'xgigaethernet 1/2/1', interfaceAlias: 'xge-1/2/1' },
-    { src: 'TLI005', dest: 'TLI041', interface: 'tengigabitethernet 1/1/25', interfaceAlias: 'TGE1/1/25' },
-    { src: 'TLI041', dest: 'TLI008', interface: 'tengigabitethernet 1/1/25', interfaceAlias: 'TGE1/1/25' },
-    { src: 'TLI008', dest: 'STG', interface: 'xgigaethernet 1/1/2', interfaceAlias: 'xge-1/1/2' },
-  ];
+  interfacesNE.push({
+    src: 'TBU',
+    dest: 'DGL030',
+    interfaces: [{ name: 'GigabitEthernet0/1/1', alias: '-' }],
+  });
+  interfacesNE.push({
+    src: 'DGL030',
+    dest: 'DGL175',
+    interfaces: [{ name: 'xgigaethernet 1/2/1', alias: 'xge-1/2/1' }],
+  });
+  interfacesNE.push({
+    src: 'DGL175',
+    dest: 'DGL079',
+    interfaces: [{ name: 'xgigaethernet 1/2/1', alias: 'xge-1/2/1' }],
+  });
+  interfacesNE.push({
+    src: 'DGL079',
+    dest: 'DGL034',
+    interfaces: [{ name: 'xgigaethernet 1/2/1', alias: 'xge-1/2/1' }],
+  });
+  interfacesNE.push({
+    src: 'DGL034',
+    dest: 'TLI005',
+    interfaces: [{ name: 'xgigaethernet 1/2/1', alias: 'xge-1/2/1' }],
+  });
+  interfacesNE.push({
+    src: 'TLI005',
+    dest: 'TLI041',
+    interfaces: [{ name: 'tengigabitethernet 1/1/25', alias: 'TGE1/1/25' }],
+  });
+  interfacesNE.push({
+    src: 'TLI041',
+    dest: 'TLI008',
+    interfaces: [{ name: 'tengigabitethernet 1/1/25', alias: 'TGE1/1/25' }],
+  });
+  interfacesNE.push({
+    src: 'TLI008',
+    dest: 'STG',
+    interfaces: [{ name: 'xgigaethernet 1/1/2', alias: 'xge-1/1/2' }],
+  });
   segmentInfo = { title, routes, interfacesNE };
   msg = await detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfaces, unmonitDevices, edges);
 

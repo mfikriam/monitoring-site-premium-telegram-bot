@@ -5,15 +5,15 @@ function checkInterfaceStatus(resultString, resObj) {
   resObj.statusLink = '✅';
 
   for (const intf of resObj.interfaces) {
-    const regex = new RegExp(`\\s+${intf.portName}\\s+\\S+\\s+(\\S+)`, 'i');
+    const regex = new RegExp(`\\s+${intf.name}\\s+\\S+\\s+(\\S+)`, 'i');
     const match = resultString.match(regex);
 
-    if (match && match[1] === 'Full') intf.portStatus = '✅';
-    else intf.portStatus = '❌';
+    if (match && match[1] === 'Full') intf.status = '✅';
+    else intf.status = '❌';
 
     // Print Status Interface
-    const portDesc = intf.portStatus === '✅' ? 'Working' : 'LOS';
-    console.log(`    - Status Interface ${intf.portName}: ${portDesc} ${intf.portStatus} (${intf.portRoute})`);
+    const portDesc = intf.status === '✅' ? 'Working' : 'LOS';
+    console.log(`    - Status Interface ${intf.name}: ${portDesc} ${intf.status} (${intf.route})`);
   }
 }
 
@@ -61,7 +61,7 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
         // STREAM CLOSE HANDLER
         stream.on('close', () => {
           clearTimeout(timeoutHandle);
-          if (!authFailed && !isTimeOut) checkInterfaceStatus(finalResult, resObj);
+          if (!authFailed && !isTimeOut && loggedin) checkInterfaceStatus(finalResult, resObj);
           resolve();
         });
 
@@ -73,6 +73,13 @@ async function METRO({ nmsConfig, neConfig, datek, resObj, timeout = 30000 }) {
           // STORE THE STREAM DATA
           result += dataStr;
           if (commandExec) finalResult += dataStr;
+
+          // Handle Forced Closed By Device
+          if (!loggedin && dataStr.includes('Connection closed by foreign host.')) {
+            authFailed = true;
+            console.log('    - Connection Blocked By Device (Forced Closed)');
+            conn.end();
+          }
 
           // Handle RNO NMS SSH To NE
           if (!loggedin && dataStr.includes('rno7app:~$')) {

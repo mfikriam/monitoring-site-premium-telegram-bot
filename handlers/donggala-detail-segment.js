@@ -11,6 +11,13 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfa
   // Destruct Segment Info
   const { title, routes, interfacesNE, segBreak = false } = segmentInfo;
 
+  // Add Default Status to All Interfaces
+  interfacesNE.forEach((intfNE) => {
+    intfNE.interfaces.forEach((intf) => {
+      intf.status = '⬛';
+    });
+  });
+
   // Print Title
   if (!segBreak) console.log(`\n[Detail Segment : ${title}]\n`);
 
@@ -38,8 +45,7 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfa
       currentBW: '#',
       maxBW: '#',
       statusLink: '⬛',
-      interface: interfacesNE.find((route) => route.src === src && route.dest === dest).interface,
-      interfaceAlias: interfacesNE.find((route) => route.src === src && route.dest === dest).interfaceAlias,
+      interfaces: interfacesNE.find((route) => route.src === src && route.dest === dest).interfaces,
     };
 
     // Monitor Device
@@ -49,18 +55,24 @@ async function detailSegment(msg, dateks, defaultConfig, segmentInfo, losInterfa
       if (resObj.statusLink === '✅') break;
       if (resObj.statusLink === '❌' && resObj.maxBW !== 0) break;
 
-      // Handle False LOS or Unmonit
-      const delayTime = (i + 1) * 3000;
-      console.log(`    - Trying Recheck Device with Delay ${delayTime / 1000} Seconds (Attempt ${i + 1})`);
-      await delay(delayTime);
+      // Add Delay When LOS or Unmonit
+      if (i < numMonitor - 1) {
+        const delayTime = (i + 1) * 3000;
+        console.log(`    - Trying Recheck Device with Delay ${delayTime / 1000} Seconds (Attempt ${i + 1})`);
+        await delay(delayTime);
+      }
     }
 
     // Add Result Object to Message
     msg += ` <${resObj.currentBW}/${resObj.maxBW} ${resObj.statusLink}> ${dest}`;
 
-    // Add LOS Interface to Array
-    if (resObj.statusLink === '❌') {
-      losInterfaces.push(`- ${datek.hostname_ne} ${resObj.interface} &lt;&gt; ${datekDest.hostname_ne} LOS ❌`);
+    // Add LOS Interfaces to Array
+    if (resObj.statusLink === '❌' || resObj.statusLink === '⚠️') {
+      resObj.interfaces.forEach((intf) => {
+        if (intf.status !== '✅') {
+          losInterfaces.push(`- ${datek.hostname_ne} ${intf.name} <> ${datekDest.hostname_ne} LOS ❌`);
+        }
+      });
     }
 
     // Add Unmonit Devices to Array
